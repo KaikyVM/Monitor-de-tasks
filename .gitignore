@@ -1,0 +1,15 @@
+**/.pytest_cache/
+**/__pycache__/
+**/.build/
+**/.terraform/
+.vscode/
+.build
+/tests/venv/
+/venv/
+/.venv/
+env/
+.env
+.idea/
+/.build/
+/build/
+/dist/

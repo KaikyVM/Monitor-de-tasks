@@ -1,0 +1,33 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - echo "📦 Iniciando preBuild em $(date)"
+        - cd src/frontend
+        - echo "🧹 Limpando dist antiga..."
+        - rm -rf dist/*
+        - nvm install 20
+        - nvm use 20
+        - rm -rf node_modules
+        - npm ci
+        # CRIA O ARQUIVO .env DINAMICAMENTE
+        - echo "VITE_COGNITO_AUTHORITY=${VITE_COGNITO_AUTHORITY}" >> .env
+        - echo "VITE_COGNITO_CLIENT_ID=${VITE_COGNITO_CLIENT_ID}" >> .env
+        - echo "VITE_REDIRECT_URI=${VITE_REDIRECT_URI}" >> .env
+        - echo "VITE_LOGOUT_URI=${VITE_LOGOUT_URI}" >> .env
+        - echo "Arquivo .env criado com sucesso:"
+        - cat .env # Imprime o conteúdo do .env para debug
+    build:
+      commands:
+        - echo "🚀 Iniciando build em $(date)"
+        - npm run build
+        - echo "📁 Conteúdo da pasta dist:"
+        - ls -la dist
+  artifacts:
+    baseDirectory: src/frontend/dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - src/frontend/node_modules/**/*

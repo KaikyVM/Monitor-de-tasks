@@ -1,0 +1,399 @@
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - hotfix/*
+
+pr:
+  branches:
+    include:
+      - main
+
+parameters:
+  - name: environment
+    displayName: "Ambiente para Deploy de Infra (Opcional)"
+    type: string
+    default: "none"
+    values:
+      - none
+      - dev
+      - hml
+      - prd
+  - name: sonarAction
+    displayName: "Ação do SonarQube"
+    type: string
+    default: "ANALISAR"
+    values:
+      - ANALISAR
+      - CONFIGURAR
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: DevOps/azure-pipelines-templates
+      ref: refs/heads/main
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  infraRoot: "infra/pipelines"
+  AWS_REGION: "sa-east-1"
+  TERRAFORM_VERSION: "1.8.5"
+
+stages:
+
+# 1) PREPARAR CÓDIGO E TESTAR (PARA PROJETO PYTHON)
+- stage: Test
+  displayName: "1. Testar Código e Publicar Artefato"
+  jobs:
+    - job: Prepare_and_Test_Code
+      displayName: "Instalar, Testar e Publicar"
+      steps:
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: "3.12"
+          displayName: "Instalar Python 3.12"
+
+        - script: pip install -r requirements.txt
+          displayName: "Instalar Dependências (pip)"
+
+        - script: pytest --cov=src --cov-report=xml
+          displayName: "Executar Testes e Gerar Cobertura"
+        
+        - task: PublishCodeCoverageResults@2
+          displayName: "Publicar Cobertura de Testes"
+          condition: succeededOrFailed()
+          inputs:
+            codeCoverageTool: "Cobertura"
+            summaryFileLocation: "$(System.DefaultWorkingDirectory)/coverage.xml"
+
+        - task: PublishPipelineArtifact@1
+          displayName: "Publicar Artefato [source_code]"
+          inputs:
+            targetPath: "$(Build.SourcesDirectory)"
+            artifact: "source_code"
+
+# 2) ANÁLISES DE SEGURANÇA
+- stage: Security_Analysis
+  displayName: "2. Análise de Segurança"
+  dependsOn: Test
+  condition: succeeded()
+  jobs:
+    - job: SonarQube
+      displayName: "Análise SonarQube"
+      steps:
+        - task: DownloadPipelineArtifact@2
+          displayName: "Baixar Artefato [source_code]"
+          inputs:
+            artifact: source_code
+            path: $(System.DefaultWorkingDirectory)
+        
+        - template: .azure-pipelines/templates/sonar/sonarqube-template.yml@templates
+          parameters:
+            sonarAction: ${{ parameters.sonarAction }}
+            sonarServiceConnection: 'SonarQubePrd'
+            extraProperties: |
+              sonar.sources=.
+              sonar.projectName=Flowhub-View
+              sonar.projectKey=flowhub-view
+              sonar.python.coverage.reportPaths=coverage.xml
+              sonar.inclusions=src/**,infra/**
+              sonar.exclusions=**/.terraform/**,**/__pycache__/**,**/tests/**,**/frontend/**
+
+    - job: CheckmarxOne
+      displayName: "Análise Checkmarx"
+      steps:
+        - task: DownloadPipelineArtifact@2
+          displayName: "Baixar Artefato [source_code]"
+          inputs:
+            artifact: source_code
+            path: $(System.DefaultWorkingDirectory)
+            
+        - template: .azure-pipelines/templates/checkmarx/checkmarx-template.yml@templates
+
+# 3) DEPLOY INFRA (TERRAFORM)
+- stage: Deploy_Infrastructure
+  displayName: "3. Deploy de Infraestrutura (Terraform)"
+  dependsOn:
+    - Test
+    - Security_Analysis
+  condition: and(
+    succeeded(),
+    ne(variables['Build.Reason'], 'PullRequest'),
+    or(
+      ne('${{ parameters.environment }}', 'none'),
+      contains(variables['Build.SourceVersionMessage'], '#dev'),
+      contains(variables['Build.SourceVersionMessage'], '#hml'),
+      contains(variables['Build.SourceVersionMessage'], '#prd')
+    )
+    )
+  jobs:
+    - job: Terraform_Plan
+      displayName: "Terraform Plan"
+      steps:
+        - task: DownloadPipelineArtifact@2
+          inputs:
+            artifact: "source_code"
+            path: "$(System.DefaultWorkingDirectory)"
+
+        - bash: |
+            COMMIT_MSG="$(Build.SourceVersionMessage)"
+            if [[ "${{ parameters.environment }}" != "none" ]]; then ENV="${{ parameters.environment }}";
+            elif [[ "$COMMIT_MSG" == *#prd* ]]; then ENV="prd";
+            elif [[ "$COMMIT_MSG" == *#hml* ]]; then ENV="hml";
+            elif [[ "$COMMIT_MSG" == *#dev* ]]; then ENV="dev";
+            fi
+            if [[ -z "$ENV" ]]; then echo "##vso[task.logissue type=error;]Erro: Nenhum ambiente válido especificado."; exit 1; fi
+            echo "Ambiente de deploy determinado: $ENV"
+            echo "##vso[task.setvariable variable=TargetEnv;isOutput=true]$ENV"
+          name: SetEnvVars
+          displayName: "Determinar Ambiente de Deploy"
+
+        - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
+          displayName: "Instalar Terraform v$(TERRAFORM_VERSION)"
+          inputs:
+            terraformVersion: "$(TERRAFORM_VERSION)"
+
+        # - task: AWSShellScript@1
+        #   displayName: 'Terraform Init & Plan (dev)'
+        #   condition: eq(variables['SetEnvVars.TargetEnv'], 'dev')
+        #   inputs:
+        #     awsCredentials: "aws-oidc-engenharia-federation-dev"
+        #     regionName: "$(AWS_REGION)"
+        #     scriptType: "inline"
+        #     inlineScript: |
+        #       set -e
+        #       cd "$(System.DefaultWorkingDirectory)/$(infraRoot)/dev"
+        #       terraform init -reconfigure -no-color
+        #       terraform plan -var-file="dev.auto.tfvars" -out=tfplan -no-color
+        #       mv tfplan "$(Build.ArtifactStagingDirectory)/"
+
+        - task: AWSShellScript@1
+          displayName: 'Terraform Init & Plan (hml)'
+          condition: eq(variables['SetEnvVars.TargetEnv'], 'hml')
+          inputs:
+            awsCredentials: "aws-oidc-cdc-federation-hml"
+            regionName: "$(AWS_REGION)"
+            scriptType: "inline"
+            inlineScript: |
+              set -e
+              cd "$(System.DefaultWorkingDirectory)/$(infraRoot)/hml"
+              terraform init -reconfigure -no-color
+              terraform plan -var-file="hml.auto.tfvars" -out=tfplan -no-color
+              mv tfplan "$(Build.ArtifactStagingDirectory)/"
+
+        - task: AWSShellScript@1
+          displayName: 'Terraform Init & Plan (prd)'
+          condition: eq(variables['SetEnvVars.TargetEnv'], 'prd')
+          inputs:
+            awsCredentials: "aws-oidc-cdc-federation-prd"
+            regionName: "$(AWS_REGION)"
+            scriptType: "inline"
+            inlineScript: |
+              set -e
+              cd "$(System.DefaultWorkingDirectory)/$(infraRoot)/prd"
+              terraform init -reconfigure -no-color
+              terraform plan -var-file="prd.auto.tfvars" -out=tfplan -no-color
+              mv tfplan "$(Build.ArtifactStagingDirectory)/"
+
+        - task: PublishPipelineArtifact@1
+          displayName: "Publicar Artefato [tfplan]"
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)/tfplan'
+            artifact: 'tfplan'
+
+    - job: Manual_Approval
+      displayName: "Aprovação Manual"
+      dependsOn: Terraform_Plan
+      pool: server
+      steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 1440
+          inputs:
+            notifyUsers: "kaiky.barbosa@rededor.com.br"
+            instructions: "Revise o plano do Terraform. Aprove para aplicar as mudanças no ambiente '$(dependencies.Terraform_Plan.outputs['SetEnvVars.TargetEnv'])'."
+            onTimeout: "reject"
+
+    - job: Terraform_Apply
+      displayName: "Terraform Apply"
+      dependsOn:
+        - Terraform_Plan
+        - Manual_Approval
+      variables:
+        TargetEnv: $[ dependencies.Terraform_Plan.outputs['SetEnvVars.TargetEnv'] ]
+      steps:
+        - task: DownloadPipelineArtifact@2
+          inputs:
+            artifact: "source_code"
+            path: "$(Pipeline.Workspace)/source"
+        - task: DownloadPipelineArtifact@2
+          inputs:
+            artifact: "tfplan"
+            path: "$(Pipeline.Workspace)/plan"
+
+        - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
+          inputs:
+            terraformVersion: "$(TERRAFORM_VERSION)"
+        
+        # - task: AWSShellScript@1
+        #   displayName: "Terraform Apply (dev)"
+        #   condition: eq(variables.TargetEnv, 'dev')
+        #   inputs:
+        #     awsCredentials: "aws-oidc-engenharia-federation-dev"
+        #     regionName: "$(AWS_REGION)"
+        #     scriptType: "inline"
+        #     inlineScript: |
+        #       set -e
+        #       cd "$(Pipeline.Workspace)/source/$(infraRoot)/dev"
+        #       terraform init -reconfigure -no-color
+        #       terraform apply -auto-approve -no-color "$(Pipeline.Workspace)/plan/tfplan"
+
+        - task: AWSShellScript@1
+          displayName: "Terraform Apply (hml)"
+          condition: eq(variables.TargetEnv, 'hml')
+          inputs:
+            awsCredentials: "aws-oidc-cdc-federation-hml"
+            regionName: "$(AWS_REGION)"
+            scriptType: "inline"
+            inlineScript: |
+              set -e
+              cd "$(Pipeline.Workspace)/source/$(infraRoot)/hml"
+              terraform init -reconfigure -no-color
+              terraform apply -auto-approve -no-color "$(Pipeline.Workspace)/plan/tfplan"
+
+        - task: AWSShellScript@1
+          displayName: "Terraform Apply (prd)"
+          condition: eq(variables.TargetEnv, 'prd')
+          inputs:
+            awsCredentials: "aws-oidc-cdc-federation-prd"
+            regionName: "$(AWS_REGION)"
+            scriptType: "inline"
+            inlineScript: |
+              set -e
+              cd "$(Pipeline.Workspace)/source/$(infraRoot)/prd"
+              terraform init -reconfigure -no-color
+              terraform apply -auto-approve -no-color "$(Pipeline.Workspace)/plan/tfplan"
+
+        # - task: AWSShellScript@1
+        #   name: GetTerraformOutputsDev
+        #   displayName: "Extrair Outputs do Terraform (dev)"
+        #   condition: eq(variables.TargetEnv, 'dev')
+        #   inputs:
+        #     awsCredentials: 'aws-oidc-engenharia-federation-dev'
+        #     regionName: "$(AWS_REGION)"
+        #     scriptType: "inline"
+        #     inlineScript: |
+        #       set -e
+        #       cd "$(Pipeline.Workspace)/source/$(infraRoot)/dev"
+        #       REPO_NAME=$(terraform output -raw codecommit_repo_name 2>/dev/null || echo "repo-dev-flowhub-view")
+        #       echo "##vso[task.setvariable variable=CodeCommitRepoName;isOutput=true]$REPO_NAME"
+
+        - task: AWSShellScript@1
+          name: GetTerraformOutputsHml
+          displayName: "Extrair Outputs do Terraform (hml)"
+          condition: eq(variables.TargetEnv, 'hml')
+          inputs:
+            awsCredentials: 'aws-oidc-cdc-federation-hml'
+            regionName: "$(AWS_REGION)"
+            scriptType: "inline"
+            inlineScript: |
+              set -e
+              cd "$(Pipeline.Workspace)/source/$(infraRoot)/hml"
+              REPO_NAME=$(terraform output -raw codecommit_repo_name 2>/dev/null || echo "repo-hml-flowhub-view")
+              echo "##vso[task.setvariable variable=CodeCommitRepoName;isOutput=true]$REPO_NAME"
+        
+        - task: AWSShellScript@1
+          name: GetTerraformOutputsPrd
+          displayName: "Extrair Outputs do Terraform (prd)"
+          condition: eq(variables.TargetEnv, 'prd')
+          inputs:
+            awsCredentials: 'aws-oidc-cdc-federation-prd'
+            regionName: "$(AWS_REGION)"
+            scriptType: "inline"
+            inlineScript: |
+              set -e
+              cd "$(Pipeline.Workspace)/source/$(infraRoot)/prd"
+              REPO_NAME=$(terraform output -raw codecommit_repo_name 2>/dev/null || echo "repo-prd-flowhub-view")
+              echo "##vso[task.setvariable variable=CodeCommitRepoName;isOutput=true]$REPO_NAME"
+
+# 4) SYNC: ENVIAR CÓDIGO PARA O CODECOMMIT
+- stage: Sync_Application_Code
+  displayName: "4. Sincronizar Código-Fonte com AWS"
+  dependsOn: Deploy_Infrastructure
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+  variables:
+    TargetEnv: $[ stageDependencies.Deploy_Infrastructure.Terraform_Plan.outputs['SetEnvVars.TargetEnv'] ]
+    CodeCommitRepoName: $[ coalesce(
+      stageDependencies.Deploy_Infrastructure.Terraform_Apply.outputs['GetTerraformOutputsDev.CodeCommitRepoName'],
+      stageDependencies.Deploy_Infrastructure.Terraform_Apply.outputs['GetTerraformOutputsHml.CodeCommitRepoName'],
+      stageDependencies.Deploy_Infrastructure.Terraform_Apply.outputs['GetTerraformOutputsPrd.CodeCommitRepoName']
+      ) ]
+  jobs:
+    - job: Sync_to_CodeCommit
+      displayName: "Espelhar para o CodeCommit"
+      steps:
+        - checkout: self
+          fetchDepth: 0 
+          persistCredentials: true
+
+        - task: AWSShellScript@1
+          displayName: "Configurar Git e Sincronizar para DEV (MIRROR)"
+          condition: eq(variables.TargetEnv, 'dev')
+          inputs:
+            awsCredentials: 'aws-oidc-cdc-federation-prd'
+            regionName: "$(AWS_REGION)"
+            scriptType: "inline"
+            inlineScript: |
+              set -e -x
+              echo ">>> Configurando Git para CodeCommit..."
+              git config --global credential.helper '!aws codecommit credential-helper $@'
+              git config --global credential.UseHttpPath true
+              CODECOMMIT_URL="https://git-codecommit.$(AWS_REGION).amazonaws.com/v1/repos/$(CodeCommitRepoName)"
+              echo ">>> Setando o remote 'mirror_dest' para o CodeCommit: $(CodeCommitRepoName)"
+              git remote add mirror_dest "$CODECOMMIT_URL" || git remote set-url mirror_dest "$CODECOMMIT_URL"
+              echo ">>> Enviando MIRROR..."
+              git push mirror_dest --mirror --force
+              echo ">>> Sincronização para DEV concluída!"
+
+        - task: AWSShellScript@1
+          displayName: "Configurar Git e Sincronizar para HML (MIRROR)"
+          condition: eq(variables.TargetEnv, 'hml')
+          inputs:
+            awsCredentials: 'aws-oidc-cdc-federation-hml'
+            regionName: "$(AWS_REGION)"
+            scriptType: "inline"
+            inlineScript: |
+              set -e -x
+              echo ">>> Configurando Git para CodeCommit..."
+              git config --global credential.helper '!aws codecommit credential-helper $@'
+              git config --global credential.UseHttpPath true
+              CODECOMMIT_URL="https://git-codecommit.$(AWS_REGION).amazonaws.com/v1/repos/$(CodeCommitRepoName)"
+              echo ">>> Setando o remote 'mirror_dest' para o CodeCommit: $(CodeCommitRepoName)"
+              git remote add mirror_dest "$CODECOMMIT_URL" || git remote set-url mirror_dest "$CODECOMMIT_URL"
+              echo ">>> Enviando MIRROR..."
+              git push mirror_dest --mirror --force
+              echo ">>> Sincronização para HML concluída!"
+              
+        - task: AWSShellScript@1
+          displayName: "Configurar Git e Sincronizar para PRD (MIRROR)"
+          condition: eq(variables.TargetEnv, 'prd')
+          inputs:
+            awsCredentials: 'aws-oidc-cdc-federation-prd'
+            regionName: "$(AWS_REGION)"
+            scriptType: "inline"
+            inlineScript: |
+              set -e -x
+              echo ">>> Configurando Git para CodeCommit..."
+              git config --global credential.helper '!aws codecommit credential-helper $@'
+              git config --global credential.UseHttpPath true
+              CODECOMMIT_URL="https://git-codecommit.$(AWS_REGION).amazonaws.com/v1/repos/$(CodeCommitRepoName)"
+              echo ">>> Setando o remote 'mirror_dest' para o CodeCommit: $(CodeCommitRepoName)"
+              git remote add mirror_dest "$CODECOMMIT_URL" || git remote set-url mirror_dest "$CODECOMMIT_URL"
+              echo ">>> Enviando MIRROR..."
+              git push mirror_dest --all --force
+              git push mirror_dest --tags --force
+
+              echo ">>> Sincronização para PRD concluída!"
