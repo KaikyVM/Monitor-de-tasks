@@ -1,0 +1,85 @@
+/* src/styles/LoginPage.css */
+
+/* Estilos de base e para o fundo */
+.login-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  /* --- ONDE VOCÊ COLOCARÁ A IMAGEM DEPOIS --- */
+  /* Cole a URL pública da sua imagem de fundo aqui quando conseguir */
+  background-image: url('URL_DA_IMAGEM_DE_FUNDO_VAI_AQUI');
+  background-color: #f0f2f5; /* Cor de fundo caso a imagem não carregue */
+  background-size: cover;
+  background-position: center;
+
+  /*
+   * PARA CELULARES E TABLETS (padrão):
+   * Centraliza a caixa de login no meio da tela.
+  */
+  justify-content: center;  /* Centraliza horizontalmente */
+  align-items: center;      /* Centraliza verticalmente */
+  padding: 20px; /* Adiciona um respiro nas laterais em telas pequenas */
+}
+
+/* A caixa de login branca */
+.login-box {
+  background-color: white;
+  padding: 40px;
+  border-radius: 12px; /* Bordas arredondadas */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12); /* Sombra suave */
+  text-align: center;
+  width: 100%;
+  max-width: 400px; /* Largura máxima em celulares */
+  box-sizing: border-box; /* Garante que o padding não aumente a largura */
+}
+
+/*
+ * PARA TELAS GRANDES (DESKTOP):
+ * A partir de 768px de largura, aplicamos estas regras.
+*/
+@media (min-width: 768px) {
+  .login-container {
+    /* Move a caixa de login para a DIREITA */
+    justify-content: flex-end;
+    /* Adiciona um espaçamento para não colar na borda */
+    padding-right: 10vw; /* 10% da largura da tela como espaço na direita */
+  }
+
+  .login-box {
+    max-width: 420px; /* Pode ser um pouco maior em telas grandes */
+  }
+}
+
+
+/* Estilos para o conteúdo dentro da caixa */
+.login-box h2 {
+  margin-bottom: 10px;
+  color: #333;
+  font-weight: 600;
+  font-size: 24px;
+}
+
+.login-box p {
+  margin-bottom: 30px;
+  color: #666;
+  font-size: 16px;
+}
+
+.login-button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  background-color: #007bff; /* Cor do botão - ajuste para a cor da Rede D'Or */
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-button:hover {
+  background-color: #0056b3;
+}
