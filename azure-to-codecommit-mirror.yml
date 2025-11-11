@@ -10,31 +10,6 @@ pr:
     include:
       - main
 
-parameters:
-  - name: environment
-    displayName: "Ambiente para Deploy de Infra (Opcional)"
-    type: string
-    default: "none"
-    values:
-      - none
-      - dev
-      - hml
-      - prd
-  - name: sonarAction
-    displayName: "Ação do SonarQube"
-    type: string
-    default: "ANALISAR"
-    values:
-      - ANALISAR
-      - CONFIGURAR
-
-resources:
-  repositories:
-    - repository: templates
-      type: git
-      name: DevOps/azure-pipelines-templates
-      ref: refs/heads/main
-
 pool:
   vmImage: "ubuntu-latest"
 
@@ -44,77 +19,7 @@ variables:
   TERRAFORM_VERSION: "1.8.5"
 
 stages:
-
-# 1) PREPARAR CÓDIGO E TESTAR (PARA PROJETO PYTHON)
-- stage: Test
-  displayName: "1. Testar Código e Publicar Artefato"
-  jobs:
-    - job: Prepare_and_Test_Code
-      displayName: "Instalar, Testar e Publicar"
-      steps:
-        - task: UsePythonVersion@0
-          inputs:
-            versionSpec: "3.12"
-          displayName: "Instalar Python 3.12"
-
-        - script: pip install -r requirements.txt
-          displayName: "Instalar Dependências (pip)"
-
-        - script: pytest --cov=src --cov-report=xml
-          displayName: "Executar Testes e Gerar Cobertura"
-        
-        - task: PublishCodeCoverageResults@2
-          displayName: "Publicar Cobertura de Testes"
-          condition: succeededOrFailed()
-          inputs:
-            codeCoverageTool: "Cobertura"
-            summaryFileLocation: "$(System.DefaultWorkingDirectory)/coverage.xml"
-
-        - task: PublishPipelineArtifact@1
-          displayName: "Publicar Artefato [source_code]"
-          inputs:
-            targetPath: "$(Build.SourcesDirectory)"
-            artifact: "source_code"
-
-# 2) ANÁLISES DE SEGURANÇA
-- stage: Security_Analysis
-  displayName: "2. Análise de Segurança"
-  dependsOn: Test
-  condition: succeeded()
-  jobs:
-    - job: SonarQube
-      displayName: "Análise SonarQube"
-      steps:
-        - task: DownloadPipelineArtifact@2
-          displayName: "Baixar Artefato [source_code]"
-          inputs:
-            artifact: source_code
-            path: $(System.DefaultWorkingDirectory)
-        
-        - template: .azure-pipelines/templates/sonar/sonarqube-template.yml@templates
-          parameters:
-            sonarAction: ${{ parameters.sonarAction }}
-            sonarServiceConnection: 'SonarQubePrd'
-            extraProperties: |
-              sonar.sources=.
-              sonar.projectName=Flowhub-View
-              sonar.projectKey=flowhub-view
-              sonar.python.coverage.reportPaths=coverage.xml
-              sonar.inclusions=src/**,infra/**
-              sonar.exclusions=**/.terraform/**,**/__pycache__/**,**/tests/**,**/frontend/**
-
-    - job: CheckmarxOne
-      displayName: "Análise Checkmarx"
-      steps:
-        - task: DownloadPipelineArtifact@2
-          displayName: "Baixar Artefato [source_code]"
-          inputs:
-            artifact: source_code
-            path: $(System.DefaultWorkingDirectory)
-            
-        - template: .azure-pipelines/templates/checkmarx/checkmarx-template.yml@templates
-
-# 3) DEPLOY INFRA (TERRAFORM)
+# DEPLOY INFRA (TERRAFORM)
 - stage: Deploy_Infrastructure
   displayName: "3. Deploy de Infraestrutura (Terraform)"
   dependsOn:
@@ -161,7 +66,7 @@ stages:
         #   displayName: 'Terraform Init & Plan (dev)'
         #   condition: eq(variables['SetEnvVars.TargetEnv'], 'dev')
         #   inputs:
-        #     awsCredentials: "aws-oidc-engenharia-federation-dev"
+        #     awsCredentials: "xxxxxxxxxxx"
         #     regionName: "$(AWS_REGION)"
         #     scriptType: "inline"
         #     inlineScript: |
@@ -175,7 +80,7 @@ stages:
           displayName: 'Terraform Init & Plan (hml)'
           condition: eq(variables['SetEnvVars.TargetEnv'], 'hml')
           inputs:
-            awsCredentials: "aws-oidc-cdc-federation-hml"
+            awsCredentials: "xxxxxxxxxxx"
             regionName: "$(AWS_REGION)"
             scriptType: "inline"
             inlineScript: |
@@ -189,7 +94,7 @@ stages:
           displayName: 'Terraform Init & Plan (prd)'
           condition: eq(variables['SetEnvVars.TargetEnv'], 'prd')
           inputs:
-            awsCredentials: "aws-oidc-cdc-federation-prd"
+            awsCredentials: "xxxxxxxxxxx"
             regionName: "$(AWS_REGION)"
             scriptType: "inline"
             inlineScript: |
@@ -213,7 +118,7 @@ stages:
         - task: ManualValidation@0
           timeoutInMinutes: 1440
           inputs:
-            notifyUsers: "kaiky.barbosa@rededor.com.br"
+            notifyUsers: "kaikyed@gmail.com.br"
             instructions: "Revise o plano do Terraform. Aprove para aplicar as mudanças no ambiente '$(dependencies.Terraform_Plan.outputs['SetEnvVars.TargetEnv'])'."
             onTimeout: "reject"
 
@@ -242,7 +147,7 @@ stages:
         #   displayName: "Terraform Apply (dev)"
         #   condition: eq(variables.TargetEnv, 'dev')
         #   inputs:
-        #     awsCredentials: "aws-oidc-engenharia-federation-dev"
+        #     awsCredentials: "xxxxxxxxx"
         #     regionName: "$(AWS_REGION)"
         #     scriptType: "inline"
         #     inlineScript: |
@@ -255,7 +160,7 @@ stages:
           displayName: "Terraform Apply (hml)"
           condition: eq(variables.TargetEnv, 'hml')
           inputs:
-            awsCredentials: "aws-oidc-cdc-federation-hml"
+            awsCredentials: "xxxxxxxxxx"
             regionName: "$(AWS_REGION)"
             scriptType: "inline"
             inlineScript: |
@@ -268,7 +173,7 @@ stages:
           displayName: "Terraform Apply (prd)"
           condition: eq(variables.TargetEnv, 'prd')
           inputs:
-            awsCredentials: "aws-oidc-cdc-federation-prd"
+            awsCredentials: "xxxxxxxxxx"
             regionName: "$(AWS_REGION)"
             scriptType: "inline"
             inlineScript: |
@@ -282,7 +187,7 @@ stages:
         #   displayName: "Extrair Outputs do Terraform (dev)"
         #   condition: eq(variables.TargetEnv, 'dev')
         #   inputs:
-        #     awsCredentials: 'aws-oidc-engenharia-federation-dev'
+        #     awsCredentials: 'xxxxxxxxxxxx'
         #     regionName: "$(AWS_REGION)"
         #     scriptType: "inline"
         #     inlineScript: |
@@ -296,7 +201,7 @@ stages:
           displayName: "Extrair Outputs do Terraform (hml)"
           condition: eq(variables.TargetEnv, 'hml')
           inputs:
-            awsCredentials: 'aws-oidc-cdc-federation-hml'
+            awsCredentials: 'xxxxxxxxxxxxxx'
             regionName: "$(AWS_REGION)"
             scriptType: "inline"
             inlineScript: |
@@ -310,7 +215,7 @@ stages:
           displayName: "Extrair Outputs do Terraform (prd)"
           condition: eq(variables.TargetEnv, 'prd')
           inputs:
-            awsCredentials: 'aws-oidc-cdc-federation-prd'
+            awsCredentials: 'xxxxxxxxxxx'
             regionName: "$(AWS_REGION)"
             scriptType: "inline"
             inlineScript: |
@@ -343,7 +248,7 @@ stages:
           displayName: "Configurar Git e Sincronizar para DEV (MIRROR)"
           condition: eq(variables.TargetEnv, 'dev')
           inputs:
-            awsCredentials: 'aws-oidc-cdc-federation-prd'
+            awsCredentials: 'xxxxxxxxxxx'
             regionName: "$(AWS_REGION)"
             scriptType: "inline"
             inlineScript: |
@@ -362,7 +267,7 @@ stages:
           displayName: "Configurar Git e Sincronizar para HML (MIRROR)"
           condition: eq(variables.TargetEnv, 'hml')
           inputs:
-            awsCredentials: 'aws-oidc-cdc-federation-hml'
+            awsCredentials: 'xxxxxxxxxxx'
             regionName: "$(AWS_REGION)"
             scriptType: "inline"
             inlineScript: |
@@ -381,7 +286,7 @@ stages:
           displayName: "Configurar Git e Sincronizar para PRD (MIRROR)"
           condition: eq(variables.TargetEnv, 'prd')
           inputs:
-            awsCredentials: 'aws-oidc-cdc-federation-prd'
+            awsCredentials: 'xxxxxxxxxxx'
             regionName: "$(AWS_REGION)"
             scriptType: "inline"
             inlineScript: |
