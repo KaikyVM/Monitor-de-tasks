@@ -23,7 +23,7 @@ def aws_credentials():
     os.environ["AWS_DEFAULT_REGION"] = "sa-east-1"
     # --- CORREÇÃO AQUI ---
     # Define a variável de ambiente com o nome da tabela que o teste espera.
-    os.environ["DYNAMODB_TABLE_NAME"] = "flowhub_task_status"
+    os.environ["DYNAMODB_TABLE_NAME"] = "DMS_task_monitor_task_status"
 
 @pytest.fixture
 def mock_dynamodb_table(aws_credentials):

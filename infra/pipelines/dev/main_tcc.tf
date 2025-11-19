@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
-    bucket = "cdc-corporativo-terraform-dev"
-    key    = "flowhub_view/dev/terraform.tfstate" # isolado para dev
-    region = "sa-east-1"
+    bucket = "meu-bucket-tcc-terraform-stat" // <-- SEU BUCKET
+    key    = "dms-task-monitor/tcc/terraform.tfstate" // <-- NOVA CHAVE
+    region = "us-east-1" // Mesma região do bucket
   }
 }
 
@@ -28,6 +28,7 @@ locals {
   cognito_user_pool_client_name   = local.resource_prefix # Nomes de cliente são mais simples
   cognito_domain_prefix           = local.resource_prefix # Domínio deve ser único
   # Lambdas e Roles do Cognito (recurso: lambda, role)
+  codecommit_policy_name = "policy-${local.resource_prefix}-codecommit-access"
   cognito_lambda_iam_role_name  = "role-${local.resource_prefix}-cognito-trigger"
   cognito_pre_signup_lambda_name = "lambda-${local.resource_prefix}-pre-signup"
   cognito_post_conf_lambda_name   = "lambda-${local.resource_prefix}-post-confirmation"
@@ -43,17 +44,17 @@ locals {
   update_status_lambda_name          = "lambda-${local.resource_prefix}-update-status"
   update_status_lambda_iam_role_name = "role-${local.resource_prefix}-update-status"
 }
-module "codecommit" {
-  source          = "../../modules/codecommit"
-  repository_name = local.codecommit_repository_name
-  tags            = var.tags
-}
-module "codecommit_policy_dev" {
-  source = "../../modules/iam_codecommit_policy"
+# module "codecommit" {
+#   source          = "../../modules/codecommit"
+#   repository_name = local.codecommit_repository_name
+#   tags            = var.tags
+# }
+# module "codecommit_policy_dev" {
+#   source = "../../modules/iam_codecommit_policy"
 
-  policy_name     = "FlowhubViewdevCodeCommitAccess"
-  repository_name = local.codecommit_repository_name
-}
+#   policy_name = local.codecommit_policy_name
+#   repository_name = local.codecommit_repository_name
+# }
 
 # Cria os recursos base para dev
 module "api_gateway" {
@@ -126,10 +127,9 @@ module "amplify" {
   # Variáveis
   app_name       = var.app_name 
   environment    = var.environment
-  hosted_zone_name = var.hosted_zone_name
-  subdomain_prefix = var.subdomain_prefix
-  repository_url = module.codecommit.repository_clone_url_http
-  branch_name    = var.amplify_branch_name
+  repository_url = var.github_repo_url
+  access_token   = var.github_pat
+  branch_name    = var.amplify_branch_name  
   branch_stage   = var.amplify_branch_stage
   tags           = var.tags
   frontend_env_vars = {
@@ -166,8 +166,8 @@ module "cognito" {
   post_confirmation_lambda_source_file = "${path.root}/../../../src/backend/post_confirmation/post_confirmation.py"
 }
 
-module "get_flowhub_task_status" {
-  source = "../../modules/get_flowhub_task_status"
+module "get_DMS_task_monitor_task_status" {
+  source = "../../modules/get_DMS_task_monitor_task_status"
 
   # Passando os dados da API criada pelo módulo "api_gateway"
   api_gateway_id                 = module.api_gateway.id
@@ -188,7 +188,7 @@ module "get_flowhub_task_status" {
   tags                             = var.tags
   aws_region                       = var.aws_region
   lambda_source_dir_path           = "${path.root}/../../../src/backend"
-  lambda_handler_path              = "get_flowhub_task_status.get_flowhub_task_status.lambda_handler"
+  lambda_handler_path              = "get_DMS_task_monitor_task_status.get_DMS_task_monitor_task_status.lambda_handler"
 }
 
 module "invoke_step_function" {
@@ -215,7 +215,7 @@ module "invoke_step_function" {
   # Conectando módulos
   cognito_user_pool_arn = module.cognito.user_pool_arn
   stepfunction_arn = var.stepfunction_arn
-  dynamodb_table_arn    = module.get_flowhub_task_status.dynamodb_table_arn
+  dynamodb_table_arn    = module.get_DMS_task_monitor_task_status.dynamodb_table_arn
 }
 
 module "teste_conectividade_dms" {
@@ -250,7 +250,7 @@ module "update_status_lambda" {
   lambda_iam_role_name   = local.update_status_lambda_iam_role_name
   lambda_handler_path    = "lambda-update-status.handler" 
   lambda_source_dir      = "${path.root}/../../../src/backend/update_status_lambda" # Verifique se este caminho está correto
-  dynamodb_table_arn     = module.get_flowhub_task_status.dynamodb_table_arn
+  dynamodb_table_arn     = module.get_DMS_task_monitor_task_status.dynamodb_table_arn
   dynamodb_table_name    = local.dynamodb_table_name
   tags                   = var.tags
 }
@@ -263,6 +263,7 @@ module "eventbridge" {
   target_lambda_arn           = module.update_status_lambda.lambda_arn
   target_lambda_function_name = module.update_status_lambda.lambda_function_name
   tags                        = var.tags
+  app_name = var.app_name
 }
 
 
@@ -275,8 +276,8 @@ resource "aws_api_gateway_deployment" "deployment" {
     always_redeploy = timestamp()
   }
   depends_on = [
-    module.get_flowhub_task_status.post_integration,
-    module.get_flowhub_task_status.options_integration,
+    module.get_DMS_task_monitor_task_status.post_integration,
+    module.get_DMS_task_monitor_task_status.options_integration,
     module.invoke_step_function.post_integration,
     module.invoke_step_function.options_integration,
     module.teste_conectividade_dms.post_integration,

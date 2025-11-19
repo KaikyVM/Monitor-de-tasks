@@ -3,7 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // Monta as URLs completas dos endpoints dinamicamente.
 const testConnectionLambdaUrl = `${API_BASE_URL}/dms/test-connection`;
 const stepFunctionUrl = `${API_BASE_URL}/dms/invoke`;
-const flowhubUrl = `${API_BASE_URL}/dms/get_flowhub_task_status`;
+const DMS_task_monitorUrl = `${API_BASE_URL}/dms/get_DMS_task_monitor_task_status`;
 
 function getAuthHeaders(auth) {
   if (!auth || !auth.user || !auth.user.id_token) {
@@ -19,7 +19,7 @@ function getAuthHeaders(auth) {
 
  export async function fetchTasks(auth) {
    try {
-     const response = await fetch(flowhubUrl, {
+     const response = await fetch(DMS_task_monitorUrl, {
        method: "POST",
        headers: getAuthHeaders(auth), 
        body: JSON.stringify({ action: "listar_status" }),
@@ -48,7 +48,7 @@ export async function getTaskDetails(taskArn, auth) {
   if (!taskArn) throw new Error("taskArn é obrigatório");
  
   try {
-    const response = await fetch(flowhubUrl, {
+    const response = await fetch(DMS_task_monitorUrl, {
       method: "POST",
       headers: getAuthHeaders(auth),
       body: JSON.stringify({ 

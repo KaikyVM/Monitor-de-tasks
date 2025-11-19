@@ -1,0 +1,36 @@
+# -- Arquivo: merger.ignore --
+
+# Git
+.git/
+
+# Dependências (Python)
+__pycache__/
+.venv/
+venv/
+*.egg-info/
+
+# Dependências (Node.js)
+node_modules/
+
+# Arquivos de Build/Distribuição
+build/
+dist/
+coverage/
+
+# Configuração de IDE/Editor
+.vscode/
+.idea/
+*.swp
+
+# Logs e Arquivos Temporários
+*.log
+*.tmp
+
+# Segredos (MUITO IMPORTANTE IGNORAR)
+.env
+.env.*
+*.key
+*.pem
+
+# O próprio arquivo de saída que vamos gerar
+contexto_monografia.txt

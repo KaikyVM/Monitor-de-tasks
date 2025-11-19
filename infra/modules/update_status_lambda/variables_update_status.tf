@@ -3,7 +3,7 @@
 variable "app_name" {
   description = "Nome base da aplicação para nomear recursos."
   type        = string
-  default     = "flowhub"
+  default     = "DMS_task_monitor"
 }
 
 variable "environment" {

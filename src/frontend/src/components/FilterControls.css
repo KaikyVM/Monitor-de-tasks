@@ -1,35 +1,60 @@
-.filter-controls {
+.filter-controls-container {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+  gap: 15px;
+  margin: 10px 0;
+  flex-wrap: wrap; /* Permite que os filtros quebrem a linha em telas menores */
 }
 
-.filter-controls span {
-  font-weight: 500;
-  color: #adb5bd;
+.filter-controls-container span {
+  font-weight: bold;
+  color: #555;
+}
+
+.chips-wrapper {
+  display: flex;
+  gap: 10px;
 }
 
 .filter-chip {
-  padding: 6px 16px;
-  border: 1px solid #495057;
-  border-radius: 20px;
-  background-color: transparent;
-  color: #ced4da;
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 9999px; /* Pílula perfeita */
+  background-color: #fff;
+  color: #333;
   cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease-in-out;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
 }
 
 .filter-chip:hover {
-  background-color: #343a40;
-  border-color: #868e96;
+  background-color: #f0f0f0;
+  border-color: #999;
 }
 
 .filter-chip.active {
   background-color: #007bff;
-  color: white;
+  color: #fff;
   border-color: #007bff;
   font-weight: bold;
+}
+
+/* --- Dark Mode --- */
+body.dark-mode .filter-controls-container span {
+  color: #a0aec0;
+}
+
+body.dark-mode .filter-chip {
+  background-color: transparent;
+  border-color: #4a5568;
+  color: #f7fafc;
+}
+
+body.dark-mode .filter-chip:hover {
+  background-color: #2d3748;
+}
+
+body.dark-mode .filter-chip.active {
+  background-color: #3182ce;
+  border-color: #3182ce;
 }

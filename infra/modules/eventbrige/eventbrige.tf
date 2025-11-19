@@ -1,8 +1,8 @@
 
 # Recurso 1: A Regra do EventBridge que filtra os eventos
 resource "aws_cloudwatch_event_rule" "sfn_status_change_rule" {
-  name        = "CaptureFlowhubSfnStatusChangesRule-${var.environment}"
-  description = "Captura eventos de mudança de status da Step Function do Flowhub"
+  name        = "CaptureSfnStatusChanges-${var.app_name}-${var.environment}"
+  description = "Captura eventos de mudança de status da Step Function do DMS_task_monitor"
 
   event_pattern = jsonencode({
     "source"      : ["aws.states"],

@@ -1,12 +1,12 @@
-const TaskListHeader = () => (
-  <div className="task-row task-row-header">
-    <div className="task-cell task-name">TASKS</div>
-    <div className="task-cell">STATUS</div>
-    <div className="task-cell-connection">CONEXÃO</div>
-    <div className="task-cell-restart">RESTART</div>
-    <div className="task-cell-updated">ATUALIZADO POR:</div>
-    <div className="task-stepFunction">STEP FUNCTION</div>
-  </div>
-);
-
-export default TaskListHeader;
+// Em TaskListHeader.jsx
+function TaskListHeader() {
+  return (
+    <div className="task-row-header">
+      <div className="task-cell task-name">Task Name</div>
+      <div className="task-cell">Status</div>
+      <div className="task-cell">Recovery Status</div>
+      <div className="task-cell task-cell-connection">Test Connection</div>
+      <div className="task-cell task-cell-restart">Actions</div>
+    </div>
+  );
+}

@@ -11,10 +11,10 @@ function LoginPage() {
     <div className="login-container">
       <div className="login-box">
         {/* adicionar o logo aqui no futuro */}
-        {/* <img src="/logo-flowhub.png" alt="Logo" /> */}
+        {/* <img src="/logo-DMS_task_monitor.png" alt="Logo" /> */}
 
         <h2>Acesse sua Conta</h2>
-        <p>Bem-vindo ao painel do Flowhub.</p>
+        <p>Bem-vindo ao painel do DMS_task_monitor.</p>
         
         <button className="login-button" onClick={() => auth.signinRedirect()}>
           Entrar

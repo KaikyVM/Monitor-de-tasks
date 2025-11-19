@@ -144,17 +144,12 @@ body {
 
 /* Linha da lista (cada item) */
 .task-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #e0e0e0;
-  transition: background-color 0.3s;
+  border-bottom: 1px solid #e0e0e0; /* Borda sutil para cada linha */
 }
 
 /* Efeito hover para destacar a linha */
 .task-row:hover {
-  background-color: #f9f9f9;
+  background-color: #f5f5f5; /* Efeito hover mais simples */
 }
 
 /* Última linha sem borda */
@@ -164,12 +159,12 @@ body {
 
 /* Cabeçalho da lista */
 .task-row-header {
-  display: flex;
-  background-color: #f1f1f1;
-  flex-wrap: wrap;
-  font-weight: bold;
-  text-align: left;
-  padding: 5px 10px;
+  /* Remove o fundo antigo, usa borda inferior */
+  background-color: transparent; 
+  border-bottom: 2px solid #e0e0e0;
+  text-transform: uppercase; /* Deixa o texto em maiúsculo */
+  font-size: 0.75rem;
+  color: #666;
 }
 
 /* Células (colunas) */
@@ -460,10 +455,14 @@ body {
     margin: 5px;
   }
   .task-row,
-  .task-row-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.task-row-header {
+  /* Remove o fundo antigo, usa borda inferior */
+  background-color: transparent; 
+  border-bottom: 2px solid #e0e0e0;
+  text-transform: uppercase; /* Deixa o texto em maiúsculo */
+  font-size: 0.75rem;
+  color: #666;
+}
   .task-cell {
     text-align: left;
     width: 100%;
@@ -495,4 +494,15 @@ body {
     font-size: 12px;
     margin: 5px;
   }
+}
+
+/* Estilo para a data e hora no status de recovery */
+.timestamp {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 4px;
+}
+
+body.dark-mode .timestamp {
+  color: #aaa; 
 }

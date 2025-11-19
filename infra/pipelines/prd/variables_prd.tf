@@ -25,7 +25,7 @@ variable "hosted_zone_name" {
 }
 
 variable "subdomain_prefix" {
-  description = "O prefixo a ser usado para o subdomínio (ex: 'flowhub-view')."
+  description = "O prefixo a ser usado para o subdomínio (ex: 'DMS_task_monitor')."
   type        = string
 }
 

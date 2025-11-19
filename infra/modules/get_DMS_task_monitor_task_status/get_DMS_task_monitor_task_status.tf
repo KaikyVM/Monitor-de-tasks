@@ -1,11 +1,11 @@
 
   locals {
     log_group_name = "/aws/lambda/${var.lambda_name}"
-    lambda_zip_output_path = "${path.module}/get_flowhub_task_status.zip"
+    lambda_zip_output_path = "${path.module}/get_DMS_task_monitor_task_status.zip"
   }
 
 # DYNAMODB
-resource "aws_dynamodb_table" "flowhub_task_status" {
+resource "aws_dynamodb_table" "DMS_task_monitor_task_status" {
   # Usa o nome explícito
   name = var.dynamodb_table_name
 
@@ -76,7 +76,7 @@ resource "aws_iam_role_policy" "lambda_service_permissions" {
           "dynamodb:UpdateItem" ,
           "dynamodb:BatchGetItem"
         ],
-        Resource = aws_dynamodb_table.flowhub_task_status.arn
+        Resource = aws_dynamodb_table.DMS_task_monitor_task_status.arn
       },
       {
         Effect   = "Allow",
@@ -89,7 +89,7 @@ resource "aws_iam_role_policy" "lambda_service_permissions" {
 
 
 # Lambda
-resource "aws_lambda_function" "get_flowhub_task_status" {
+resource "aws_lambda_function" "get_DMS_task_monitor_task_status" {
   function_name = var.lambda_name
   #function_name = format("%s-get-task-status%s", var.app_name, var.environment == "" ? "" : "-${var.environment}")
   role             = aws_iam_role.lambda_role.arn
@@ -124,7 +124,7 @@ resource "aws_api_gateway_method" "post" {
 resource "aws_api_gateway_resource" "get_task_status_resource" {
   rest_api_id = var.api_gateway_id
   parent_id   = var.api_gateway_parent_resource_id
-  path_part   = "get_flowhub_task_status"
+  path_part   = "get_DMS_task_monitor_task_status"
 }
 
 resource "aws_api_gateway_integration" "post_integration" {
@@ -133,13 +133,13 @@ resource "aws_api_gateway_integration" "post_integration" {
   http_method             = aws_api_gateway_method.post.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.get_flowhub_task_status.invoke_arn
+  uri                     = aws_lambda_function.get_DMS_task_monitor_task_status.invoke_arn
 }
 
 resource "aws_lambda_permission" "allow_apigw" {
   statement_id_prefix = "AllowAPIGWInvoke"
   action              = "lambda:InvokeFunction"
-  function_name       = aws_lambda_function.get_flowhub_task_status.function_name
+  function_name       = aws_lambda_function.get_DMS_task_monitor_task_status.function_name
   principal           = "apigateway.amazonaws.com"
 
   # ARN genérico para qualquer endpoint DENTRO desta API

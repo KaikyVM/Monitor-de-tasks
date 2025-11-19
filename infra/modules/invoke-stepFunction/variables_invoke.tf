@@ -1,6 +1,6 @@
 # Variáveis de identificação padrão
 variable "app_name" {
-  description = "Nome base da aplicação para prefixo (ex: flowhub)."
+  description = "Nome base da aplicação para prefixo (ex: DMS_task_monitor)."
   type        = string
 }
 

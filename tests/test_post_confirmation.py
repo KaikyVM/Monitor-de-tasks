@@ -24,7 +24,7 @@ def cognito_setup(aws_credentials):
         client = boto3.client("cognito-idp", region_name="sa-east-1")
         
         # 1. Criar um User Pool mockado
-        response_pool = client.create_user_pool(PoolName="flowhub_view_test_pool")
+        response_pool = client.create_user_pool(PoolName="DMS_task_monitor_test_pool")
         user_pool_id = response_pool['UserPool']['Id']
         
         # 2. Criar o grupo padrão que a Lambda espera que exista

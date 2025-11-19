@@ -22,32 +22,32 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# Pre-Signup
-data "archive_file" "pre_signup_zip" {
-  type        = "zip"
-  source_file = var.pre_signup_lambda_source_file
-  output_path = "${path.module}/pre_signup.zip"
-}
+# # Pre-Signup
+# data "archive_file" "pre_signup_zip" {
+#   type        = "zip"
+#   source_file = var.pre_signup_lambda_source_file
+#   output_path = "${path.module}/pre_signup.zip"
+# }
 
-resource "aws_lambda_function" "pre_signup_validator" {
-  function_name = var.pre_signup_lambda_name
-  #function_name = format("%s-pre-signup%s", var.app_name, var.environment == "" ? "" : "-${var.environment}")
-  role          = aws_iam_role.iam_for_lambda.arn
-  handler       = "pre_signup.lambda_handler"
-  runtime       = "python3.12"
-  filename      = data.archive_file.pre_signup_zip.output_path
-  source_code_hash = data.archive_file.pre_signup_zip.output_base64sha256
+# resource "aws_lambda_function" "pre_signup_validator" {
+#   function_name = var.pre_signup_lambda_name
+#   #function_name = format("%s-pre-signup%s", var.app_name, var.environment == "" ? "" : "-${var.environment}")
+#   role          = aws_iam_role.iam_for_lambda.arn
+#   handler       = "pre_signup.lambda_handler"
+#   runtime       = "python3.12"
+#   filename      = data.archive_file.pre_signup_zip.output_path
+#   source_code_hash = data.archive_file.pre_signup_zip.output_base64sha256
 
-  depends_on = [aws_iam_role_policy_attachment.lambda_logs]
-}
+#   depends_on = [aws_iam_role_policy_attachment.lambda_logs]
+# }
 
-resource "aws_lambda_permission" "allow_cognito_pre_signup" {
-  statement_id  = "AllowCognitoToInvokePreSignup"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.pre_signup_validator.function_name
-  principal     = "cognito-idp.amazonaws.com"
-  source_arn    = aws_cognito_user_pool.user_pool.arn
-}
+# resource "aws_lambda_permission" "allow_cognito_pre_signup" {
+#   statement_id  = "AllowCognitoToInvokePreSignup"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.pre_signup_validator.function_name
+#   principal     = "cognito-idp.amazonaws.com"
+#   source_arn    = aws_cognito_user_pool.user_pool.arn
+# }
 
 # Post-Confirmation
 data "archive_file" "post_confirmation_zip" {
@@ -104,7 +104,7 @@ resource "aws_cognito_user_pool" "user_pool" {
   deletion_protection    = "INACTIVE"
 
   lambda_config {
-    pre_sign_up     = aws_lambda_function.pre_signup_validator.arn
+    # pre_sign_up     = aws_lambda_function.pre_signup_validator.arn
     post_confirmation = aws_lambda_function.post_confirmation_assigner.arn
   }
 

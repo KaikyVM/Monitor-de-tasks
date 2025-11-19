@@ -28,7 +28,7 @@ output "invoke_step_function_endpoint_url" {
 
 output "get_task_status_endpoint_url" {
   description = "URL do endpoint para buscar o status da tarefa."
-  value       = module.get_flowhub_task_status.api_gateway_endpoint_invoke_url
+  value       = module.get_DMS_task_monitor_task_status.api_gateway_endpoint_invoke_url
 }
 
 output "test_connectivity_dms_endpoint_url" {

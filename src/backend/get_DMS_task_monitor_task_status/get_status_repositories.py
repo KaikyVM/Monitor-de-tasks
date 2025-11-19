@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timezone 
 from boto3.dynamodb.conditions import Key
 from decimal import Decimal
-from get_flowhub_task_status.runtime_decorator import runtime_log
+from get_DMS_task_monitor_task_status.runtime_decorator import runtime_log
 
 @runtime_log
 def get_all_replication_tasks():
@@ -44,8 +44,8 @@ def get_step_function_status_complete_from_dynamo(task_id):
     """Busca o status de uma Step Function específica no DynamoDB."""
     dynamodb = boto3.resource("dynamodb")
     table_name = os.environ.get("DYNAMODB_TABLE_NAME")
-    flowhub_tbl = dynamodb.Table(table_name)
-    resp = flowhub_tbl.get_item(Key={"task_identifier": task_id})
+    DMS_task_monitor_tbl = dynamodb.Table(table_name)
+    resp = DMS_task_monitor_tbl.get_item(Key={"task_identifier": task_id})
     item = resp.get("Item", {})
     return {
         "status": item.get("sfn_status", "Indefinido"),
@@ -56,7 +56,7 @@ def get_step_function_status_complete_from_dynamo(task_id):
     }
 
 @runtime_log
-def save_flowhub_task_status(
+def save_DMS_task_monitor_task_status(
     task_identifier, dms_status):
     """
         VERSÃO OTIMIZADA: Salva APENAS o status do DMS.
@@ -64,9 +64,9 @@ def save_flowhub_task_status(
     """
     dynamodb = boto3.resource("dynamodb")
     table_name = os.environ.get("DYNAMODB_TABLE_NAME")
-    flowhub_tbl = dynamodb.Table(table_name)
+    DMS_task_monitor_tbl = dynamodb.Table(table_name)
     
-    flowhub_tbl.update_item(
+    DMS_task_monitor_tbl.update_item(
         Key={"task_identifier": task_identifier},
         UpdateExpression="SET #dms = :dms, #upd_at = :upd_at",
         ExpressionAttributeNames={
@@ -84,5 +84,5 @@ def get_full_status_from_dynamo(task_id):
     """Busca o item completo de uma tarefa no DynamoDB."""
     dynamodb = boto3.resource("dynamodb")
     table_name = os.environ.get("DYNAMODB_TABLE_NAME")
-    flowhub_tbl = dynamodb.Table(table_name)
-    return flowhub_tbl.get_item(Key={"task_identifier": task_id}).get("Item", {})
+    DMS_task_monitor_tbl = dynamodb.Table(table_name)
+    return DMS_task_monitor_tbl.get_item(Key={"task_identifier": task_id}).get("Item", {})

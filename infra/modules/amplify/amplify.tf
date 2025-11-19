@@ -2,7 +2,7 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
-resource "aws_amplify_app" "flowhub_view_app" {
+resource "aws_amplify_app" "DMS_task_monitor_app" {
   name = var.app_name_override
   #name = "${var.app_name}-${var.environment}" # variavel
 
@@ -12,6 +12,7 @@ resource "aws_amplify_app" "flowhub_view_app" {
 
   repository           = var.repository_url 
   iam_service_role_arn = aws_iam_role.amplify_service_role.arn
+  access_token = var.access_token
   tags = {
     Project     = var.app_name
     Environment = var.environment
@@ -20,7 +21,7 @@ resource "aws_amplify_app" "flowhub_view_app" {
 
 # branch conectada
 resource "aws_amplify_branch" "amplify_branch" {
-  app_id      = aws_amplify_app.flowhub_view_app.id
+  app_id      = aws_amplify_app.DMS_task_monitor_app.id
   branch_name = var.branch_name # colocando variavel
   stage       = var.branch_stage
 
@@ -47,7 +48,7 @@ resource "aws_iam_policy" "amplify_ssm_policy" {
       {
         Effect   = "Allow",
         Action   = "ssm:GetParameters",
-        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/amplify/${aws_amplify_app.flowhub_view_app.id}/*"
+        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/amplify/${aws_amplify_app.DMS_task_monitor_app.id}/*"
       }
     ]
   })
@@ -79,22 +80,3 @@ resource "aws_iam_role" "amplify_service_role" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "amplify_codecommit_access" {
-  role       = aws_iam_role.amplify_service_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSCodeCommitFullAccess"
-}
-
-data "aws_route53_zone" "main" {
-  name         = var.hosted_zone_name
-  private_zone = false
-}
-
-resource "aws_amplify_domain_association" "domain" {
-  app_id      = aws_amplify_app.flowhub_view_app.id
-  domain_name = data.aws_route53_zone.main.name
-
-  sub_domain {
-    branch_name = aws_amplify_branch.amplify_branch.branch_name
-    prefix      = var.subdomain_prefix
-  }
-}
