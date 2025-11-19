@@ -25,3 +25,7 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+variable "app_name" {
+  description = "Nome geral da aplicação."
+  type        = string
+}

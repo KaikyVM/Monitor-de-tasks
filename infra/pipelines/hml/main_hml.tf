@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
-    bucket = "cdc-corporativo-terraform-dev"
-    key    = "flowhub_view/hml/terraform.tfstate" # isolado para hml
-    region = "sa-east-1"
+    bucket = "meu-bucket-tcc-terraform-state" // <-- SEU BUCKET
+    key    = "dms-task-monitor/tcc/terraform.tfstate" // <-- NOVA CHAVE
+    region = "us-east-1" // Mesma região do bucket
   }
 }
 
@@ -28,6 +28,7 @@ locals {
   cognito_user_pool_client_name   = local.resource_prefix # Nomes de cliente são mais simples
   cognito_domain_prefix           = local.resource_prefix # Domínio deve ser único
   # Lambdas e Roles do Cognito (recurso: lambda, role)
+  codecommit_policy_name = "policy-${local.resource_prefix}-codecommit-access"
   cognito_lambda_iam_role_name  = "role-${local.resource_prefix}-cognito-trigger"
   cognito_pre_signup_lambda_name = "lambda-${local.resource_prefix}-pre-signup"
   cognito_post_conf_lambda_name   = "lambda-${local.resource_prefix}-post-confirmation"
@@ -40,20 +41,22 @@ locals {
   invoke_sfn_lambda_iam_role_name = "role-${local.resource_prefix}-invoke-sfn"
   test_dms_lambda_name            = "lambda-${local.resource_prefix}-test-dms"
   test_dms_lambda_iam_role_name   = "role-${local.resource_prefix}-test-dms"
+  update_status_lambda_name          = "lambda-${local.resource_prefix}-update-status"
+  update_status_lambda_iam_role_name = "role-${local.resource_prefix}-update-status"
 }
 module "codecommit" {
   source          = "../../modules/codecommit"
   repository_name = local.codecommit_repository_name
   tags            = var.tags
 }
-module "codecommit_policy_hml" {
+module "codecommit_policy_dev" {
   source = "../../modules/iam_codecommit_policy"
 
-  policy_name     = "FlowhubViewhmlCodeCommitAccess"
+  policy_name = local.codecommit_policy_name
   repository_name = local.codecommit_repository_name
 }
 
-# Cria os recursos base para hml
+# Cria os recursos base para dev
 module "api_gateway" {
   source      = "../../modules/api_gateway"
   api_name    = local.api_gateway_name
@@ -162,15 +165,14 @@ module "cognito" {
   post_confirmation_lambda_source_file = "${path.root}/../../../src/backend/post_confirmation/post_confirmation.py"
 }
 
-module "get_flowhub_task_status" {
-  source = "../../modules/get_flowhub_task_status"
+module "get_DMS_task_monitor_task_status" {
+  source = "../../modules/get_DMS_task_monitor_task_status"
 
   # Passando os dados da API criada pelo módulo "api_gateway"
   api_gateway_id                 = module.api_gateway.id
   api_gateway_execution_arn      = module.api_gateway.execution_arn
   api_gateway_parent_resource_id = aws_api_gateway_resource.dms_parent.id
   cors_allow_origin       = var.cognito_callback_url 
-
   # Passando nomes exatos
   step_function_execution_arn_pattern = "${replace(var.stepfunction_arn, ":stateMachine:", ":execution:")}:*"
   dynamodb_table_name = local.dynamodb_table_name
@@ -185,7 +187,7 @@ module "get_flowhub_task_status" {
   tags                             = var.tags
   aws_region                       = var.aws_region
   lambda_source_dir_path           = "${path.root}/../../../src/backend"
-  lambda_handler_path              = "get_flowhub_task_status.get_flowhub_task_status.lambda_handler"
+  lambda_handler_path              = "get_DMS_task_monitor_task_status.get_DMS_task_monitor_task_status.lambda_handler"
 }
 
 module "invoke_step_function" {
@@ -211,8 +213,8 @@ module "invoke_step_function" {
 
   # Conectando módulos
   cognito_user_pool_arn = module.cognito.user_pool_arn
-  dynamodb_table_arn    = module.get_flowhub_task_status.dynamodb_table_arn
   stepfunction_arn = var.stepfunction_arn
+  dynamodb_table_arn    = module.get_DMS_task_monitor_task_status.dynamodb_table_arn
 }
 
 module "teste_conectividade_dms" {
@@ -226,6 +228,7 @@ module "teste_conectividade_dms" {
   # Passando nomes exatos
   lambda_name         = local.test_dms_lambda_name
   lambda_iam_role_name = local.test_dms_lambda_iam_role_name
+  cognito_user_pool_arn = module.cognito.user_pool_arn
   
   # Variáveis de configuração
   api_gateway_authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
@@ -235,7 +238,31 @@ module "teste_conectividade_dms" {
   aws_region                       = var.aws_region
   lambda_source_dir                = "${path.root}/../../../src/backend/lambda_teste_conectividade_dms"
   lambda_handler_path              = "lambda_teste_conectividade_dms.lambda_handler"
-  cognito_user_pool_arn = module.cognito.user_pool_arn
+  
+}
+module "update_status_lambda" {
+  source = "../../modules/update_status_lambda"
+
+  app_name               = var.app_name
+  environment            = var.environment
+  lambda_name            = local.update_status_lambda_name
+  lambda_iam_role_name   = local.update_status_lambda_iam_role_name
+  lambda_handler_path    = "lambda-update-status.handler" 
+  lambda_source_dir      = "${path.root}/../../../src/backend/update_status_lambda" # Verifique se este caminho está correto
+  dynamodb_table_arn     = module.get_DMS_task_monitor_task_status.dynamodb_table_arn
+  dynamodb_table_name    = local.dynamodb_table_name
+  tags                   = var.tags
+}
+
+module "eventbridge" {
+  source = "../../modules/eventbrige" # Usando a pasta que você criou
+
+  environment                 = var.environment
+  state_machine_arn           = var.stepfunction_arn
+  target_lambda_arn           = module.update_status_lambda.lambda_arn
+  target_lambda_function_name = module.update_status_lambda.lambda_function_name
+  tags                        = var.tags
+  app_name = var.app_name
 }
 
 
@@ -248,8 +275,8 @@ resource "aws_api_gateway_deployment" "deployment" {
     always_redeploy = timestamp()
   }
   depends_on = [
-    module.get_flowhub_task_status.post_integration,
-    module.get_flowhub_task_status.options_integration,
+    module.get_DMS_task_monitor_task_status.post_integration,
+    module.get_DMS_task_monitor_task_status.options_integration,
     module.invoke_step_function.post_integration,
     module.invoke_step_function.options_integration,
     module.teste_conectividade_dms.post_integration,
@@ -264,6 +291,7 @@ resource "aws_api_gateway_stage" "api_stage" {
   stage_name    = var.environment
   rest_api_id   = module.api_gateway.id
   deployment_id = aws_api_gateway_deployment.deployment.id
+
   # Habilita o rastreamento com AWS X-Ray
   xray_tracing_enabled = true
 

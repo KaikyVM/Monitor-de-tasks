@@ -3,14 +3,14 @@ import logging
 import boto3
 import os
 from decimal import Decimal
-from get_flowhub_task_status.get_status_repositories import (
+from get_DMS_task_monitor_task_status.get_status_repositories import (
     get_all_replication_tasks,
     get_single_replication_task,
     get_step_function_status_complete_from_dynamo,
-    save_flowhub_task_status,
+    save_DMS_task_monitor_task_status,
 )
 
-from get_flowhub_task_status.runtime_decorator import runtime_log
+from get_DMS_task_monitor_task_status.runtime_decorator import runtime_log
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -84,7 +84,7 @@ def lambda_handler(event, _):
                 is_processing = fh.get("sfn_status", "").lower() == "running"
                 
                 # A escrita continua acontecendo individualmente (o que é rápido e aceitável)
-                save_flowhub_task_status(
+                save_DMS_task_monitor_task_status(
                     task_identifier=tid,
                     dms_status=t["Status"]
                 )
@@ -94,7 +94,7 @@ def lambda_handler(event, _):
                     "Status": t["Status"], "ReplicationInstanceArn": t.get("ReplicationInstanceArn"),
                     "SourceEndpointArn": t.get("SourceEndpointArn"),
                     "MigrationProgress": t.get("ReplicationTaskStats", {}).get("FullLoadProgressPercent", "N/A"),
-                    "FlowHubStatus": fh.get("sfn_status", "Indefinido"), 
+                    "DMS_task_monitorStatus": fh.get("sfn_status", "Indefinido"), 
                     "sfn_finished_at": fh.get("sfn_finished_at", ""),
                     "restartDisabled": is_processing, "connectionDisabled": is_processing,
                     "updated_by": fh.get("updated_by", "N/A"),

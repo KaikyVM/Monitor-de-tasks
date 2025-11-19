@@ -100,7 +100,7 @@ def start_step_function(body, updated_by):
     # Ela procura por '-dev', '-hml', ou '-prd' e reconstrói o nome base.
     match = re.search(r"(-dev|-hml|-prd)", task_identifier)
     if match:
-        # Pega tudo até o final do sufixo do ambiente (ex: 'flowhub-tasy-cloud-dev')
+        # Pega tudo até o final do sufixo do ambiente (ex: 'DMS_task_monitor-tasy-cloud-dev')
         base_identifier = task_identifier[: match.end()]
     else:
         # Se não encontrar um ambiente, usa o identificador inteiro como base (fallback)

@@ -1,5 +1,5 @@
 variable "app_name" {
-  description = "nome da aplicação (flowhub-view)."
+  description = "nome da aplicação ()."
   type        = string
 }
 
@@ -45,13 +45,8 @@ variable "frontend_env_vars" {
   default     = {}
 }
 
-# NOVAS VARIÁVEIS PARA O DOMÍNIO
-variable "hosted_zone_name" {
-  description = "O nome da Zona de DNS (Hosted Zone) no Route 53."
+variable "access_token" {
+  description = "GitHub Personal Access Token para o Amplify."
   type        = string
-}
-
-variable "subdomain_prefix" {
-  description = "O prefixo a ser usado para o subdomínio (ex: 'audisin')."
-  type        = string
+  sensitive   = true // Para não exibir o token nos logs
 }

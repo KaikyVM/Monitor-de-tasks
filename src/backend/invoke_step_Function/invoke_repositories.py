@@ -8,16 +8,16 @@ def get_last_status(task_id):
     # Inicializa o cliente DENTRO da função
     dynamodb = boto3.resource("dynamodb")
     table_name = os.environ.get("DYNAMODB_TABLE_NAME")
-    flowhub_tbl = dynamodb.Table(table_name)
+    DMS_task_monitor_tbl = dynamodb.Table(table_name)
 
-    return flowhub_tbl.get_item(Key={"task_identifier": task_id}).get("Item", {})
+    return DMS_task_monitor_tbl.get_item(Key={"task_identifier": task_id}).get("Item", {})
 
 
 def update_status_in_db(task_identifier, status, execution_arn=None, updated_by=None):
     """Atualiza o status de uma task de forma segura usando UpdateExpression."""
     dynamodb = boto3.resource("dynamodb")
     table_name = os.environ.get("DYNAMODB_TABLE_NAME")
-    flowhub_tbl = dynamodb.Table(table_name)
+    DMS_task_monitor_tbl = dynamodb.Table(table_name)
 
     # Inicia a construção da expressão de atualização
     update_expression_parts = [
@@ -53,7 +53,7 @@ def update_status_in_db(task_identifier, status, execution_arn=None, updated_by=
     print(f"Expression Attribute Values: {expression_attribute_values}")
     print("FIM DO DEBUG")
 
-    flowhub_tbl.update_item(
+    DMS_task_monitor_tbl.update_item(
         Key={"task_identifier": task_identifier},
         UpdateExpression=final_update_expression,
         ExpressionAttributeNames=expression_attribute_names,

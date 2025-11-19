@@ -1,4 +1,3 @@
-# No arquivo: tests/test_lambda_get_flowhub_task_status.py
 
 import json
 import pytest
@@ -12,19 +11,19 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 
 # Importa o handler da Lambda que estamos a testar
-from src.backend.get_flowhub_task_status.get_flowhub_task_status import lambda_handler
+from src.backend.get_DMS_task_monitor_task_status.get_DMS_task_monitor_task_status import lambda_handler
 
 # Importa as funções do repositório para testá-las diretamente
-from src.backend.get_flowhub_task_status.get_status_repositories import (
-    save_flowhub_task_status,
+from src.backend.get_DMS_task_monitor_task_status.get_status_repositories import (
+    save_DMS_task_monitor_task_status,
     get_step_function_status_complete_from_dynamo
 )
 
 # --- Testes de Unidade para as Funções do Repositório ---
 
-@patch("src.backend.get_flowhub_task_status.get_status_repositories.boto3")
-def test_save_flowhub_task_status_simplified(mock_boto3):
-    """Testa a nova versão simplificada da função save_flowhub_task_status."""
+@patch("src.backend.get_DMS_task_monitor_task_status.get_status_repositories.boto3")
+def test_save_DMS_task_monitor_task_status_simplified(mock_boto3):
+    """Testa a nova versão simplificada da função save_DMS_task_monitor_task_status."""
     # ARRANGE
     mock_dynamodb_resource = MagicMock()
     mock_table = MagicMock()
@@ -33,7 +32,7 @@ def test_save_flowhub_task_status_simplified(mock_boto3):
 
     # ACT
     # Chamamos a função com a nova assinatura correta (apenas 2 argumentos)
-    save_flowhub_task_status(
+    save_DMS_task_monitor_task_status(
         task_identifier="task-id-123",
         dms_status="running"
     )
@@ -48,7 +47,7 @@ def test_save_flowhub_task_status_simplified(mock_boto3):
     # Note que não há mais verificação de dados da SFN aqui
 
 
-@patch("src.backend.get_flowhub_task_status.get_status_repositories.boto3")
+@patch("src.backend.get_DMS_task_monitor_task_status.get_status_repositories.boto3")
 def test_get_step_function_status_complete_from_dynamo(mock_boto3):
     # ARRANGE
     mock_dynamodb_resource = MagicMock()
@@ -74,7 +73,7 @@ def test_get_step_function_status_complete_from_dynamo(mock_boto3):
 
 # --- Testes do Lambda Handler ---
 
-@patch("src.backend.get_flowhub_task_status.get_flowhub_task_status.get_all_replication_tasks")
+@patch("src.backend.get_DMS_task_monitor_task_status.get_DMS_task_monitor_task_status.get_all_replication_tasks")
 def test_lambda_handler_dms_client_failure(mock_get_tasks):
     # ARRANGE
     mock_get_tasks.side_effect = Exception("Erro inesperado no DMS")

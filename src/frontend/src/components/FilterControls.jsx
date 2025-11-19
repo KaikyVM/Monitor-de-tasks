@@ -2,37 +2,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './FilterControls.css'; 
 
-
-const CATEGORY_FILTERS = [
-  { label: "Todos", value: "" },
-  { label: "TASY", value: "TASY" },
-  { label: "WPD", value: "WPD" },
-  { label: "Flowhub", value: "FLOWHUB" },
-];
-
+// Filtros de status agora são o foco principal
 const STATUS_FILTERS = [
-  { label: "Qualquer Status", value: "" },
+  { label: "Todos os Status", value: "" },
   { label: "Em Execução", value: "running" },
   { label: "Com Falha", value: "failed" },
+  { label: "Parado", value: "stopped" },
 ];
 
-const FilterControls = ({ activeCategory, setActiveCategory, activeStatus, setActiveStatus }) => {
+const FilterControls = ({ activeStatus, setActiveStatus }) => {
   return (
-    <>
-      <div className="filter-controls">
-        <span>Filtrar por Categoria:</span>
-        {CATEGORY_FILTERS.map(filter => (
-          <button
-            key={filter.label}
-            className={`filter-chip ${activeCategory === filter.value ? 'active' : ''}`}
-            onClick={() => setActiveCategory(filter.value)}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
-      <div className="filter-controls" style={{ marginTop: '10px' }}>
-        <span>Filtrar por Status:</span>
+    <div className="filter-controls-container">
+      <span>Filtrar por Status:</span>
+      <div className="chips-wrapper">
         {STATUS_FILTERS.map(filter => (
           <button
             key={filter.label}
@@ -43,13 +25,11 @@ const FilterControls = ({ activeCategory, setActiveCategory, activeStatus, setAc
           </button>
         ))}
       </div>
-    </>
+    </div>
   );
 };
 
 FilterControls.propTypes = {
-  activeCategory: PropTypes.string.isRequired,
-  setActiveCategory: PropTypes.func.isRequired,
   activeStatus: PropTypes.string.isRequired,
   setActiveStatus: PropTypes.func.isRequired,
 };

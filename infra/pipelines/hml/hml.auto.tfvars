@@ -1,25 +1,30 @@
-# VARIÁVEIS GERAIS PARA HML
-app_name    = "flowhub-view"
-environment = "hml" 
-aws_region  = "sa-east-1"
+# VARIÁVEIS GERAIS PARA O TCC
+app_name    = "dms-task-monitor" // <-- NOVO NOME DO PROJETO
+environment = "tcc"              // <-- NOVO AMBIENTE
+aws_region  = "us-east-1"        // <-- SUGESTÃO: Mude para uma região com mais serviços no Free Tier, como N. Virginia.
+
 tags = {
-  Project     = "Flowhub View"
-  Environment = "hml" 
+  Project     = "DMS Task Monitor" // <-- NOVO NOME PARA TAGS
+  Environment = "tcc"
 }
-api_gateway_parent_resource_path = "/dms"
 
+api_gateway_parent_resource_path = "/monitor" // <-- Mais genérico
 
-# Amplify
-amplify_branch_name   = "develop" 
-amplify_branch_stage  = "PRODUCTION"
+# Amplify (Ajuste para o seu novo repositório)
+amplify_branch_name  = "main" // ou a branch do seu TCC
+amplify_branch_stage = "PRODUCTION"
 
-# Cognito
+# Cognito (Vamos simplificar para o TCC)
 cognito_user_groups = {
-  "Engenharia"   = "Usuários com permissões administrativas totais"
-  "TimeN1"       = "Acesso a tarefas e recovery"
-  "TimeProjetos" = "Acesso apenas ao catálogo"
+  "Admin" = "Administradores do sistema"
+  "User"  = "Usuários com permissão de visualização e execução"
 }
-cognito_callback_url = "https://develop.d3520jzun9p5q3.amplifyapp.com"
-cognito_logout_url   = "https://develop.d3520jzun9p5q3.amplifyapp.com/login"
+# ATENÇÃO: Essas URLs só funcionarão DEPOIS do primeiro deploy do Amplify.
+# Por enquanto, coloque um valor temporário.
+cognito_callback_url = "https://main.xxxxxxxxxxxxxx.amplifyapp.com" // Placeholder
+cognito_logout_url   = "https://main.xxxxxxxxxxxxxx.amplifyapp.com/login" // Placeholder
 
-stepfunction_arn = "arn:aws:states:sa-east-1:038503386091:stateMachine:cdc-corp-dev-start-recovery"
+
+
+# Step Function (ARN da sua Step Function "mock")
+stepfunction_arn = "arn:aws:states:us-east-1:SEU_ACCOUNT_ID:stateMachine:tcc-dms-task-monitor-recovery-mock" // Placeholder

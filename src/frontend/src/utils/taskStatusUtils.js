@@ -1,47 +1,37 @@
 export const getStatusStyle = (task) => {
-    if (!task || !task.Status) {
-      return {};
-    }
-    
-    if (task.Status === "running" && task.MigrationProgress === 100) {
-      return {
-        background: "linear-gradient(to right, #0fa835, #16ca52)",
-        color: "white",
-        fontWeight: "bold",
-        borderRadius: "4px",
-        padding: "12px 2px",
-        border: "2px solid #0fa835",
-      };
-    } else if (task.Status === "failed") {
-      return {
-        background: "linear-gradient(to right, #b4210e, #da0f0f)",
-        color: "white",
-        fontWeight: "bold",
-        borderRadius: "4px",
-        padding: "12px 2px",
-        border: "2px solid #791305",
-      };
-    } else if (task.Status === "running") {
-      return {
-        background: "linear-gradient(to right, #0ebb90, #13e4b0)",
-        color: "white",
-        fontWeight: "bold",
-        borderRadius: "4px",
-        padding: "12px 2px",
-        border: "2px solid #0fbe89",
-      };
-    } else if (task.Status === "ready" || task.Status === "stopped") {
-      return {
-        background: "linear-gradient(to right, #cecece, #e9e9e9)",
-        color: "#5a5a5a",
-        fontWeight: "bold",
-        borderRadius: "4px",
-        padding: "12px 2px",
-        border: "2px solid #cecece",
-      };
-    }
+  if (!task || !task.Status) {
     return {};
+  }
+
+  // Base style para todas as pills
+  const baseStyle = {
+    color: "white",
+    fontWeight: "bold",
+    borderRadius: "9999px", // Truque para fazer uma pílula perfeita
+    padding: "4px 12px",   // Padding vertical e horizontal
+    fontSize: "0.8rem",
+    textAlign: "center",
+    display: "inline-block", // Importante para o padding funcionar bem
+    minWidth: "80px", // Garante uma largura mínima
   };
+
+  let statusStyle = {};
+  const status = task.Status.toLowerCase(); // Normaliza o status
+
+  if (status === "running" && task.MigrationProgress === 100) {
+    statusStyle = { background: "#28a745" }; // Verde "Done"
+  } else if (status === "failed" || status === "error") {
+    statusStyle = { background: "#dc3545" }; // Vermelho "Pending/Failed"
+  } else if (status === "running" || status === "starting" || status === "replicating") {
+    statusStyle = { background: "#007bff" }; // Azul "Progress"
+  } else if (status === "ready" || status === "stopped") {
+    statusStyle = { background: "#6c757d", color: "white" }; // Cinza "Stopped"
+  } else {
+     statusStyle = { background: "#ffc107", color: "black" }; // Amarelo para outros status
+  }
+
+  return { ...baseStyle, ...statusStyle };
+};
   
   export const getPageNumbers = (currentPage, totalPages, maxVisible = 7) => {
     let pages = [];

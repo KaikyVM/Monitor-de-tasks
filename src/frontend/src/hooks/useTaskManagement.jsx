@@ -22,7 +22,7 @@ export function useTaskManagement(auth) {
     setError(null);
     try {
       // 2. Passe o objeto 'auth' para a chamada da API.
-      // A sua Lambda `get_flowhub_task_status` já retorna todos os dados combinados.
+      // A sua Lambda `get_DMS_task_monitor_task_status` já retorna todos os dados combinados.
       const tasksData = await apiFetchTasks(auth);
 
       if (!Array.isArray(tasksData)) {
@@ -32,11 +32,11 @@ export function useTaskManagement(auth) {
       // Processa os dados que já recebemos para definir o estado inicial dos botões
       const processedTasks = tasksData.map(task => {
         const status = (task.Status || "").toLowerCase();
-        const flowHubStatus = (task.FlowHubStatus || "").toLowerCase();
+        const DMS_task_monitorStatus = (task.DMS_task_monitorStatus || "").toLowerCase();
         
         // O botão de restart fica habilitado se o status do DMS for 'failed' ou 'stopped',
-        // ou se o status da Step Function (FlowHubStatus) for 'succeeded' ou 'failed'.
-        const restartDisabled = !(status === "failed" || status === "stopped" || flowHubStatus === "succeeded" || flowHubStatus === "failed");
+        // ou se o status da Step Function (DMS_task_monitorStatus) for 'succeeded' ou 'failed'.
+        const restartDisabled = !(status === "failed" || status === "stopped" || DMS_task_monitorStatus === "succeeded" || DMS_task_monitorStatus === "failed");
 
         return {
           ...task,
@@ -44,7 +44,7 @@ export function useTaskManagement(auth) {
           connectionClass: "btn-gray",
           connectionText: "Conexão",
           restartDisabled: restartDisabled,
-          stepFunctionStatus: task.FlowHubStatus || "Desconhecido",
+          stepFunctionStatus: task.DMS_task_monitorStatus || "Desconhecido",
         };
       });
 

@@ -54,12 +54,9 @@ variable "stepfunction_arn" {
   description = "O ARN completo da State Machine da Step Function."
   type        = string
 }
-variable "hosted_zone_name" {
-  description = "O nome da Zona de DNS (Hosted Zone) no Route 53."
-  type        = string
+variable "github_repo_url" {
+  
 }
-
-variable "subdomain_prefix" {
-  description = "O prefixo a ser usado para o subdomínio (ex: 'flowhub-view')."
-  type        = string
+variable "github_pat" {
+  
 }

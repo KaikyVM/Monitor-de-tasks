@@ -1,11 +1,11 @@
 output "dynamodb_table_name" {
-  description = "nome da Flowhub Task Status DynamoDB table."
-  value       = aws_dynamodb_table.flowhub_task_status.name
+  description = "nome da DMS_task_monitor Task Status DynamoDB table."
+  value       = aws_dynamodb_table.DMS_task_monitor_task_status.name
 }
 
 output "dynamodb_table_arn" {
-  description = " ARN do Flowhub Task Status DynamoDB table."
-  value       = aws_dynamodb_table.flowhub_task_status.arn
+  description = " ARN do DMS_task_monitor Task Status DynamoDB table."
+  value       = aws_dynamodb_table.DMS_task_monitor_task_status.arn
 }
 
 output "api_gateway_endpoint_invoke_url" {
