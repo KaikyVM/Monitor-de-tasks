@@ -187,7 +187,7 @@ resource "aws_api_gateway_integration_response" "options_integration_response" {
   response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'",
-    "method.response.header.Access-Control-Allow-Origin"  = "'${var.cors_allow_origin}'"
+    "method.response.header.Access-Control-Allow-Origin"  ="'*'"
   }
   depends_on = [aws_api_gateway_integration.options_integration]
 }

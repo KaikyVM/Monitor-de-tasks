@@ -157,8 +157,8 @@ module "cognito" {
   aws_region              = var.aws_region
   cognito_domain_prefix   = local.cognito_domain_prefix
   user_groups             = var.cognito_user_groups
-  cognito_callback_urls = [var.cognito_callback_url] # Use uma nova variável
-  cognito_logout_urls   = [var.cognito_logout_url]
+  cognito_callback_urls = [var.cognito_callback_url, "http://localhost:5173"]
+  cognito_logout_urls   = [var.cognito_logout_url,   "http://localhost:5173"]
 
 
   # Caminhos Lambdas
@@ -173,7 +173,8 @@ module "get_DMS_task_monitor_task_status" {
   api_gateway_id                 = module.api_gateway.id
   api_gateway_execution_arn      = module.api_gateway.execution_arn
   api_gateway_parent_resource_id = aws_api_gateway_resource.dms_parent.id
-  cors_allow_origin       = var.cognito_callback_url 
+  cors_allow_origin       = "*"//var.cognito_callback_url 
+  
   # Passando nomes exatos
   step_function_execution_arn_pattern = "${replace(var.stepfunction_arn, ":stateMachine:", ":execution:")}:*"
   dynamodb_table_name = local.dynamodb_table_name
@@ -198,6 +199,7 @@ module "invoke_step_function" {
   api_gateway_id                 = module.api_gateway.id
   api_gateway_execution_arn      = module.api_gateway.execution_arn
   api_gateway_parent_resource_id = aws_api_gateway_resource.dms_parent.id
+  allowed_cors_origin = "*" 
 
   # Passando nomes exatos
   lambda_name         = local.invoke_sfn_lambda_name
@@ -225,7 +227,8 @@ module "teste_conectividade_dms" {
   api_gateway_id                 = module.api_gateway.id
   api_gateway_execution_arn      = module.api_gateway.execution_arn
   api_gateway_parent_resource_id = aws_api_gateway_resource.dms_parent.id
-
+  allowed_cors_origin = "*"
+  
   # Passando nomes exatos
   lambda_name         = local.test_dms_lambda_name
   lambda_iam_role_name = local.test_dms_lambda_iam_role_name

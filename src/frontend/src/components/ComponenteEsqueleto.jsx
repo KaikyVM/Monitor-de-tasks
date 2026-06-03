@@ -1,22 +1,59 @@
-import React from 'react';
+import React from "react";
 
-const Skeleton = ({ numRows = 5, loading = false }) => {
-  if (!loading) return null;
+const ComponenteEsqueleto = () => {
+  // Criamos um array de 5 itens apenas para renderizar 5 linhas de esqueleto
+  const rows = Array.from({ length: 5 });
 
   return (
-    <div className="w-full animate-pulse">
-      <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-t-lg mb-4 w-full"></div>
-      {[...Array(numRows)].map((_, index) => (
-        <div key={index} className="flex items-center space-x-4 mb-4 px-4">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/6"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/6"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/6"></div>
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/12"></div>
+    <div className="skeleton-container" style={{ width: "100%" }}>
+      {/* Header Fake */}
+      <div className="task-row-header" style={{ opacity: 0.5 }}>
+        <div className="task-cell task-name">Loading...</div>
+        <div className="task-cell">...</div>
+        <div className="task-cell">...</div>
+        <div className="task-cell task-cell-connection">...</div>
+        <div className="task-cell task-cell-restart">...</div>
+      </div>
+
+      {/* Linhas Fake */}
+      {rows.map((_, index) => (
+        <div key={index} className="task-row" style={{ animation: "pulse 1.5s infinite" }}>
+          {/* Coluna Nome */}
+          <div className="task-cell task-name">
+            <div style={{ height: "20px", width: "70%", backgroundColor: "#e0e0e0", borderRadius: "4px" }}></div>
+          </div>
+
+          {/* Coluna Status */}
+          <div className="task-cell">
+            <div style={{ height: "24px", width: "80px", backgroundColor: "#e0e0e0", borderRadius: "12px", margin: "0 auto" }}></div>
+          </div>
+
+          {/* Coluna Recovery */}
+          <div className="task-cell">
+             <div style={{ height: "20px", width: "60%", backgroundColor: "#e0e0e0", borderRadius: "4px", margin: "0 auto" }}></div>
+          </div>
+
+          {/* Coluna Test Connection */}
+          <div className="task-cell task-cell-connection">
+            <div style={{ height: "35px", width: "100%", backgroundColor: "#e0e0e0", borderRadius: "20px" }}></div>
+          </div>
+
+          {/* Coluna Restart */}
+          <div className="task-cell task-cell-restart">
+            <div style={{ height: "35px", width: "100%", backgroundColor: "#e0e0e0", borderRadius: "20px" }}></div>
+          </div>
         </div>
       ))}
+      
+      <style>{`
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };
 
-export default SkeletonComponent;
+export default ComponenteEsqueleto;
