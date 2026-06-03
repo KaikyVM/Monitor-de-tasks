@@ -3,7 +3,7 @@ import { useAuth } from "react-oidc-context";
 import { LogOut, RefreshCw } from "lucide-react"; 
 
 import Table from "../components/Table"; 
-import Skeleton from "../components/ComponenteEsqueleto";
+import ComponenteEsqueleto from "../components/ComponenteEsqueleto";
 import TaskStatusModal from "../components/TaskStatusModal";
 import ConfirmationModal from "../components/ConfirmationModal";
 import Pagination from "../components/Pagination";
@@ -107,7 +107,7 @@ function DashBoard() {
                 <RefreshCw className="text-white w-5 h-5" />
             </div>
             <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
-              Flowhub View
+              DMS-TASK-MONITOR
             </h1>
           </div>
 
@@ -155,7 +155,7 @@ function DashBoard() {
                  <TaskErrorDisplay error={error} onRetry={fetchTasks} />
             ) : loading ? (
                  <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-gray-200 dark:border-slate-700">
-                    <Skeleton loading={true} numRows={8} />
+                    <ComponenteEsqueleto loading={true} numRows={8} />
                  </div>
             ) : (
                  <>

@@ -1,21 +1,109 @@
-**/.pytest_cache/
-**/__pycache__/
-**/.build/
-**/.terraform/
-.vscode/
-.build
-/tests/venv/
-/venv/
-/.venv/
+# =========================================================================
+# Python
+# =========================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache/
+.mypy_cache/
+.pyre/
+.pytype/
+pip-log.txt
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# =========================================================================
+# Virtual Environments (Python)
+# =========================================================================
+venv/
+.venv/
 env/
-.env
-.idea/
-/.build/
+ENV/
+lib/
+lib64/
+
+# =========================================================================
+# Node / Frontend (React, etc.)
+# =========================================================================
+node_modules/
+/src/frontend/node_modules/
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp*
+.yarn/
+dist/
 /build/
-/dist/
-*.tfstate
-*.tfstate.backup
+/.build/
+.build
+
+# =========================================================================
+# Terraform / Infrastructure (IaC)
+# =========================================================================
 .terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.*
 .terraform.lock.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Auto & Custom TF Variables (auto vars)
 *.tfvars
+*.tfvars.json
+*.auto.tfvars
 dev.auto.tfvars
+
+# =========================================================================
+# Environment Variables & Secrets (MUITO IMPORTANTE)
+# =========================================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging.local
+.env.development
+.env.test
+.env.production
+.env.staging
+.env.*
+!.env.example
+*.key
+*.pem
+
+# =========================================================================
+# Merge / Merger Files
+# =========================================================================
+# Output do script merger.py (contexto para LLM / monografia)
+contexto_monografia.txt
+contexto_*.txt
+
+# Arquivos de conflitos/sobras de Git Merge
+*.orig
+*.rej
+*.bak
+*~
+*.merge_file_*
+
+# =========================================================================
+# IDEs / Editores & Sistema Operacional
+# =========================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store

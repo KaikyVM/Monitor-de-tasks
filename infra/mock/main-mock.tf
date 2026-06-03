@@ -107,33 +107,49 @@ data "aws_ami" "amazon_linux" {
 }
 
 # Cria a instância EC2 (Free Tier)
+# Cria a instância EC2 (Free Tier) com script de configuração robusto
 resource "aws_instance" "db_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t2.micro" # Free Tier
   vpc_security_group_ids = [aws_security_group.ec2_db_sg.id]
-  key_name      = "tcc-key" # IMPORTANTE: Troque pelo nome do seu par de chaves para poder acessar via SSH
+  
+  # Se você já criou a chave tcc-key no console, use ela aqui. 
+  # Se não, pode deixar como está, pois o acesso SSH não será necessário se o script funcionar.
+  key_name      = "tcc-key" 
 
-  # Script que roda na inicialização para instalar e configurar o PostgreSQL
+  # Script AUTOMÁTICO para instalar e configurar o PostgreSQL
   user_data = <<-EOF
               #!/bin/bash
+              # 1. Instalação
               yum update -y
               amazon-linux-extras install postgresql14 -y
-              postgresql-setup --initdb
+              postgresql-setup initdb
               
-              # Configura o PostgreSQL para aceitar conexões externas
+              # 2. Configuração de Rede (O Pulo do Gato para o DMS)
+              # Permite ouvir em todos os IPs (*)
               echo "listen_addresses = '*'" >> /var/lib/pgsql/data/postgresql.conf
-              echo "host all all 0.0.0.0/0 md5" >> /var/lib/pgsql/data/pg_hba.conf
+              # Permite autenticação por senha (md5) de qualquer IP (0.0.0.0/0)
+              echo "host    all             all             0.0.0.0/0               md5" >> /var/lib/pgsql/data/pg_hba.conf
               
-              systemctl start postgresql
+              # 3. Inicia o serviço
               systemctl enable postgresql
+              systemctl start postgresql
               
-              # Cria as bases de dados e o usuário para o DMS
+              # Espera 10 segundos para garantir que o banco subiu
+              sleep 10
+              
+              # 4. Criação dos Bancos e Usuários (SQL)
+              # Nota: Usamos a variável do terraform aqui
+              sudo -u postgres psql -c "CREATE USER dms_user WITH PASSWORD '${var.db_password}';"
+              sudo -u postgres psql -c "ALTER USER dms_user WITH SUPERUSER;"
               sudo -u postgres psql -c "CREATE DATABASE source_db;"
               sudo -u postgres psql -c "CREATE DATABASE target_db;"
-              sudo -u postgres psql -c "CREATE USER dms_user WITH PASSWORD '${var.db_password}';"
               sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE source_db TO dms_user;"
               sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE target_db TO dms_user;"
               EOF
+
+  # Garante que se mudarmos o script, a máquina seja recriada
+  user_data_replace_on_change = true
 
   tags = { Name = "tcc-db-server" }
 }
