@@ -110,7 +110,7 @@ data "aws_ami" "amazon_linux" {
 # Cria a instância EC2 (Free Tier) com script de configuração robusto
 resource "aws_instance" "db_server" {
   ami           = data.aws_ami.amazon_linux.id
-  instance_type = "t2.micro" # Free Tier
+  instance_type = "t3.micro" # Free Tier elegível nesta conta
   vpc_security_group_ids = [aws_security_group.ec2_db_sg.id]
   
   # Se você já criou a chave tcc-key no console, use ela aqui. 
@@ -123,6 +123,7 @@ resource "aws_instance" "db_server" {
               # 1. Instalação
               yum update -y
               amazon-linux-extras install postgresql14 -y
+              yum install -y postgresql-server
               postgresql-setup initdb
               
               # 2. Configuração de Rede (O Pulo do Gato para o DMS)
@@ -166,7 +167,7 @@ resource "aws_dms_replication_subnet_group" "dms_subnet_group" {
 # Instância de Replicação (Free Tier)
 resource "aws_dms_replication_instance" "dms_instance" {
   replication_instance_id   = "tcc-dms-instance"
-  replication_instance_class = "dms.t3.micro" # Free Tier
+  replication_instance_class = "dms.t3.small" # Menor disponível nesta conta
   allocated_storage         = 20
   vpc_security_group_ids    = [aws_security_group.dms_sg.id]
   replication_subnet_group_id = aws_dms_replication_subnet_group.dms_subnet_group.id

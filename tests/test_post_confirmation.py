@@ -53,7 +53,7 @@ def test_new_user_is_added_to_default_group(cognito_setup):
     # ARRANGE: Preparar o ambiente do teste
     cognito_client, user_pool_id = cognito_setup
     username = "qualquer-usuario"
-    email = "kaiky.barbosa@rededor.com.br"
+    email = "kaiky.barbosa@empresa.com.br"
     
     cognito_client.admin_create_user(UserPoolId=user_pool_id, Username=username)
     event = create_mock_cognito_event(user_pool_id, username, email)

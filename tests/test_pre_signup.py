@@ -10,7 +10,7 @@ def test_handler_with_allowed_domain():
     test_event = {
         'request': {
             'userAttributes': {
-                'email': 'kaiky.barbosa@rededor.com.br'
+                'email': 'kaiky.barbosa@empresa.com.br'
             }
         }
     }
@@ -39,7 +39,7 @@ def test_handler_with_disallowed_domain():
         lambda_handler(test_event, None)
 
     # 3. Verifica o resultado: a mensagem de erro da exceção deve conter o texto esperado.
-    assert "permitido apenas para e-mails do domínio @rededor.com.br" in str(excinfo.value)
+    assert "permitido apenas para e-mails do domínio @empresa.com.br" in str(excinfo.value)
 
 def test_handler_with_malformed_email():
     """

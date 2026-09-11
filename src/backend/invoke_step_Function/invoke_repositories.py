@@ -46,12 +46,7 @@ def update_status_in_db(task_identifier, status, execution_arn=None, updated_by=
     # Monta a expressão final e executa a atualização
     final_update_expression = "SET " + ", ".join(update_expression_parts)
 
-    print("DEBUG: DENTRO DE update_status_in_db")
-    print(f"Task Identifier: {task_identifier}")
-    print(f"Update Expression: {final_update_expression}")
-    print(f"Expression Attribute Names: {expression_attribute_names}")
-    print(f"Expression Attribute Values: {expression_attribute_values}")
-    print("FIM DO DEBUG")
+
 
     DMS_task_monitor_tbl.update_item(
         Key={"task_identifier": task_identifier},

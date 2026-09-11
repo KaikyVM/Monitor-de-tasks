@@ -6,6 +6,8 @@ from boto3.dynamodb.conditions import Key
 from decimal import Decimal
 from get_DMS_task_monitor_task_status.runtime_decorator import runtime_log
 
+dynamodb = boto3.resource("dynamodb")
+
 @runtime_log
 def get_all_replication_tasks():
     """
@@ -42,7 +44,6 @@ def get_single_replication_task(task_arn: str):
 @runtime_log
 def get_step_function_status_complete_from_dynamo(task_id):
     """Busca o status de uma Step Function específica no DynamoDB."""
-    dynamodb = boto3.resource("dynamodb")
     table_name = os.environ.get("DYNAMODB_TABLE_NAME")
     DMS_task_monitor_tbl = dynamodb.Table(table_name)
     resp = DMS_task_monitor_tbl.get_item(Key={"task_identifier": task_id})
@@ -62,7 +63,6 @@ def save_DMS_task_monitor_task_status(
         VERSÃO OTIMIZADA: Salva APENAS o status do DMS.
     O status da Step Function é atualizado de forma assíncrona pela outra Lambda.
     """
-    dynamodb = boto3.resource("dynamodb")
     table_name = os.environ.get("DYNAMODB_TABLE_NAME")
     DMS_task_monitor_tbl = dynamodb.Table(table_name)
     
@@ -82,7 +82,7 @@ def save_DMS_task_monitor_task_status(
 @runtime_log
 def get_full_status_from_dynamo(task_id):
     """Busca o item completo de uma tarefa no DynamoDB."""
-    dynamodb = boto3.resource("dynamodb")
     table_name = os.environ.get("DYNAMODB_TABLE_NAME")
     DMS_task_monitor_tbl = dynamodb.Table(table_name)
     return DMS_task_monitor_tbl.get_item(Key={"task_identifier": task_id}).get("Item", {})
+

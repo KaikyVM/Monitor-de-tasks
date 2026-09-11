@@ -15,7 +15,7 @@ def lambda_handler(event, context):
     permitir o cadastro no Cognito.
     """
     # Domínio permitido
-    allowed_domain = os.environ.get('ALLOWED_DOMAIN', '@rededor.com.br')
+    allowed_domain = os.environ.get('ALLOWED_DOMAIN', '@empresa.com.br')
 
     try:
         # Obtém o e-mail do evento enviado pelo Cognito

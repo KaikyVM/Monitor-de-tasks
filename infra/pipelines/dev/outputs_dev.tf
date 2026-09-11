@@ -1,8 +1,8 @@
-# Amplify
-output "amplify_app_url" {
-  description = "URL da aplicação Amplify em DEV."
-  value       = module.amplify.branch_url
-}
+# Amplify desativado — usando frontend local
+# output "amplify_app_url" {
+#   description = "URL da aplicação Amplify em DEV."
+#   value       = module.amplify.branch_url
+# }
 
 # Cognito
 output "cognito_user_pool_id" {
