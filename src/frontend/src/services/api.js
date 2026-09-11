@@ -139,13 +139,13 @@ export async function checkConnectionTest(replicationInstanceArn, endpointArn, a
  * Invoca a Step Function para reiniciar (recovery) uma task.
  */
 export async function invokeStepFunction(taskIdentifier, username, auth) {
-  console.log("--- DEBUG: DENTRO DE invokeStepFunction ---"); // <-- DEBUG
+
   if (!taskIdentifier) throw new Error("taskIdentifier é obrigatório");
   if (!username) throw new Error("username é obrigatório");
  
   try {
     const headers = getAuthHeaders(auth);
-    console.log("Cabeçalhos a serem enviados para /invoke:", headers); // <-- DEBUG
+
 
     const payload = {
       task_identifier: taskIdentifier,

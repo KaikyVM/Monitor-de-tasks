@@ -72,40 +72,32 @@ resource "aws_api_gateway_authorizer" "cognito_authorizer" {
   identity_source = "method.request.header.Authorization"
 }
 
-# Configuração de Logs para a API Gateway
+# Configuração de Logs para a API Gateway — DESATIVADO para reduzir custos
+# resource "aws_cloudwatch_log_group" "api_gateway_logs" {
+#   name              = "/aws/api-gateway/${local.api_gateway_name}"
+#   retention_in_days = 30
+# }
 
-# Cria um Log Group dedicado para os logs de execução da API
-resource "aws_cloudwatch_log_group" "api_gateway_logs" {
-  name              = "/aws/api-gateway/${local.api_gateway_name}"
-  retention_in_days = 30 # ver quanto tempo seria o ideal
-}
+# resource "aws_iam_role" "api_gateway_cloudwatch_role" {
+#   name = "${local.api_gateway_name}-cloudwatch-role"
+#   assume_role_policy = jsonencode({
+#     Version   = "2012-10-17",
+#     Statement = [{
+#       Action    = "sts:AssumeRole",
+#       Effect    = "Allow",
+#       Principal = { Service = "apigateway.amazonaws.com" }
+#     }]
+#   })
+# }
 
-# Cria a IAM Role que a API Gateway usará para escrever no CloudWatch
-resource "aws_iam_role" "api_gateway_cloudwatch_role" {
-  name = "${local.api_gateway_name}-cloudwatch-role"
+# resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch_policy_attachment" {
+#   role       = aws_iam_role.api_gateway_cloudwatch_role.name
+#   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+# }
 
-  assume_role_policy = jsonencode({
-    Version   = "2012-10-17",
-    Statement = [{
-      Action    = "sts:AssumeRole",
-      Effect    = "Allow",
-      Principal = {
-        Service = "apigateway.amazonaws.com"
-      }
-    }]
-  })
-}
-
-# Anexa a política gerenciada da AWS que contém as permissões necessárias
-resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch_policy_attachment" {
-  role       = aws_iam_role.api_gateway_cloudwatch_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
-}
-
-# Associa a Role à conta da API Gateway (necessário para o Stage usar a role)
-resource "aws_api_gateway_account" "current" {
-  cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch_role.arn
-}
+# resource "aws_api_gateway_account" "current" {
+#   cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch_role.arn
+# }
 
 
 # Cria o recurso pai /dms na nova API
@@ -117,29 +109,28 @@ resource "aws_api_gateway_resource" "dms_parent" {
 
 # CHAMADA DOS MÓDULOS
 
-module "amplify" {
-  source = "../../modules/amplify"
+# module "amplify" desativado — usando frontend local (PAT GitHub expirou)
+# Para reativar: gerar novo PAT em github.com/settings/tokens e atualizar github_pat no dev.auto.tfvars
+# module "amplify" {
+#   source = "../../modules/amplify"
+#   app_name_override = local.amplify_app_name
+#   iam_role_name     = local.amplify_iam_role_name
+#   app_name       = var.app_name
+#   environment    = var.environment
+#   repository_url = var.github_repo_url
+#   access_token   = var.github_pat
+#   branch_name    = var.amplify_branch_name
+#   branch_stage   = var.amplify_branch_stage
+#   tags           = var.tags
+#   frontend_env_vars = {
+#     VITE_API_BASE_URL      = resource.aws_api_gateway_stage.api_stage.invoke_url
+#     VITE_COGNITO_AUTHORITY = module.cognito.user_pool_endpoint
+#     VITE_COGNITO_CLIENT_ID = module.cognito.user_pool_client_id
+#     VITE_REDIRECT_URI = var.cognito_callback_url
+#     VITE_LOGOUT_URI   = var.cognito_logout_url
+#   }
+# }
 
-  # Passando nomes exatos
-  app_name_override = local.amplify_app_name
-  iam_role_name     = local.amplify_iam_role_name
-  
-  # Variáveis
-  app_name       = var.app_name 
-  environment    = var.environment
-  repository_url = var.github_repo_url
-  access_token   = var.github_pat
-  branch_name    = var.amplify_branch_name  
-  branch_stage   = var.amplify_branch_stage
-  tags           = var.tags
-  frontend_env_vars = {
-    VITE_API_BASE_URL      = resource.aws_api_gateway_stage.api_stage.invoke_url
-    VITE_COGNITO_AUTHORITY = module.cognito.user_pool_endpoint
-    VITE_COGNITO_CLIENT_ID = module.cognito.user_pool_client_id
-    VITE_REDIRECT_URI = var.cognito_callback_url
-    VITE_LOGOUT_URI   = var.cognito_logout_url
-  }
-}
 
 module "cognito" {
   source = "../../modules/cognito"
@@ -259,7 +250,7 @@ module "update_status_lambda" {
 }
 
 module "eventbridge" {
-  source = "../../modules/eventbrige" # Usando a pasta que você criou
+  source = "../../modules/eventbridge"
 
   environment                 = var.environment
   state_machine_arn           = var.stepfunction_arn
@@ -299,23 +290,7 @@ resource "aws_api_gateway_stage" "api_stage" {
   # Habilita o rastreamento com AWS X-Ray
   xray_tracing_enabled = true
 
-  # Adiciona a configuração de logs de acesso
-  access_log_settings {
-    destination_arn = aws_cloudwatch_log_group.api_gateway_logs.arn
-    format          = jsonencode({
-        "requestId": "$context.requestId",
-        "ip": "$context.identity.sourceIp",
-        "requestTime": "$context.requestTime",
-        "httpMethod": "$context.httpMethod",
-        "resourcePath": "$context.resourcePath",
-        "status": "$context.status",
-        "authorizer.principalId": "$context.authorizer.principalId",
-        "integration.error": "$context.integration.error",
-        "integration.status": "$context.integration.status"
-    })
-  }
-
-  # Garante que a role da conta seja configurada antes do stage
-  depends_on = [aws_api_gateway_account.current]
+  # access_log_settings desativado — CloudWatch Logs desligado para reduzir custos
 }
+
 
