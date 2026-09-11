@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { Activity, PlayCircle, ArrowUpDown, ArrowUp, ArrowDown, Wifi } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
+import { PlayCircle, ArrowUpDown, ArrowUp, ArrowDown, Wifi } from 'lucide-react';
 import { Tooltip } from 'react-tooltip';
 import Badge from './Badge';
 
@@ -21,6 +22,14 @@ const SortIcon = ({ col, sortConfig }) => {
     : <ArrowDown size={12} className="text-indigo-400" />;
 };
 
+SortIcon.propTypes = {
+  col: PropTypes.string.isRequired,
+  sortConfig: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    direction: PropTypes.oneOf(['asc', 'desc']).isRequired,
+  }).isRequired,
+};
+
 // Badge de Step Function
 const SfnBadge = ({ status }) => {
   const s = (status || '').toLowerCase();
@@ -40,6 +49,10 @@ const SfnBadge = ({ status }) => {
   );
 };
 
+SfnBadge.propTypes = {
+  status: PropTypes.string,
+};
+
 const Table = ({ data, onEditDocument, onViewDocument }) => {
   const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
 
@@ -50,7 +63,7 @@ const Table = ({ data, onEditDocument, onViewDocument }) => {
     }));
   };
 
-  const content = data?.content || [];
+  const content = useMemo(() => data?.content ?? [], [data?.content]);
 
   const sortedData = useMemo(() => {
     if (!sortConfig.key) return content;
@@ -150,9 +163,9 @@ const Table = ({ data, onEditDocument, onViewDocument }) => {
                     <button
                       onClick={() => onEditDocument?.(task)}
                       disabled={
-                        task?.restartDisabled || 
-                        isProcessing || 
-                        task?.connectionText !== "Conexão (OK)" || 
+                        task?.restartDisabled ||
+                        isProcessing ||
+                        task?.connectionText !== "Conexão (OK)" ||
                         !['failed', 'stopped'].includes(String(task?.Status || '').toLowerCase())
                       }
                       data-tooltip-id="tt-restart"
@@ -213,6 +226,30 @@ const Table = ({ data, onEditDocument, onViewDocument }) => {
   );
 };
 
+const taskRowShape = PropTypes.shape({
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  task_identifier: PropTypes.string,
+  status: PropTypes.string,
+  sfn_status: PropTypes.string,
+  sfn_finished_at: PropTypes.string,
+  raw: PropTypes.shape({
+    Status: PropTypes.string,
+    connectionDisabled: PropTypes.bool,
+    connectionText: PropTypes.string,
+    restartDisabled: PropTypes.bool,
+    sfn_finished_at: PropTypes.string,
+    updated_by: PropTypes.string,
+  }),
+});
+
+Table.propTypes = {
+  data: PropTypes.shape({
+    content: PropTypes.arrayOf(taskRowShape),
+  }),
+  onEditDocument: PropTypes.func,
+  onViewDocument: PropTypes.func,
+};
+
 export default Table;
 
-
+

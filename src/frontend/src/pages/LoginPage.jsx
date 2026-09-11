@@ -1,6 +1,5 @@
 // src/pages/LoginPage.jsx
 
-import React from 'react';
 import { useAuth } from 'react-oidc-context';
 import './LoginPage.css';
 
