@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 
 const Badge = ({ text, variant = 'informative' }) => {
   const variants = {
@@ -27,6 +27,11 @@ const Badge = ({ text, variant = 'informative' }) => {
       {text}
     </span>
   );
+};
+
+Badge.propTypes = {
+  text: PropTypes.string.isRequired,
+  variant: PropTypes.oneOf(['informative', 'warning', 'positive', 'negative', 'neutral']),
 };
 
 export default Badge;

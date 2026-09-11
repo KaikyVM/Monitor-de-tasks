@@ -1,4 +1,3 @@
-import React from "react";
 
 const ComponenteEsqueleto = () => {
   // Criamos um array de 5 itens apenas para renderizar 5 linhas de esqueleto
